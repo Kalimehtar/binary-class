@@ -18,23 +18,11 @@
 (define (read-object binary-class in . args)
   (send (apply make-object binary-class args) read in))
 
-
 (begin-for-syntax
   (define fields (make-free-id-table))
   (define (get-fields id)
-    (free-id-table-ref fields id null)) ; (λ () (raise-syntax-error 'binary-class "Not found binary-class" id))))
-  (define (save-fields! id value) (free-id-table-set! fields id value) (void))
-  #;(define (build-types syntaxes) ; #'((FNAME FTYPE) ...)
-    ; #'((a u1) (b (u2 a))) -> #'((λ () u1) (λ (a) (u2 a)))
-    (define clauses (syntax->list syntaxes))
-    (let loop ([clauses clauses] [acc null] [fields null])
-      (if (null? clauses)
-          (reverse acc)
-          (syntax-case (car clauses) ()
-            [(FNAME FTYPE)
-             (loop (cdr clauses) 
-                   (cons #`(λ #,fields FTYPE) acc)                             
-                   (cons #'FNAME fields))])))))
+    (free-id-table-ref fields id null))
+  (define (save-fields! id value) (free-id-table-set! fields id value) (void)))
 
 (define (copy-object old new)
   (for ([f (field-names old)])
