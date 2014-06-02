@@ -1,18 +1,19 @@
 #lang racket/base
 (require racket/contract/base)
 (provide (contract-out 
-          [binary (-> (-> input-port? any/c)
-                      (-> any/c output-port? void?)
+          [binary (-> (-> input-port? any)
+                      (-> output-port? any/c void?)
                       binary?)]
           [binary? (-> any/c boolean?)]                  
-          [read-value (-> binary? input-port? any/c)]
-          [write-value (-> binary? any/c output-port? void?)]
+          [read-value (-> binary? input-port? any)]
+          [write-value (-> binary? output-port? any/c void?)]
           [read-object (->* ((implementation?/c binary<%>) input-port?) 
                             #:rest (listof any/c) 
                             (instanceof/c (implementation?/c binary<%>)))]
           [binary<%> interface?])
          define-binary-class)
-require (for-syntax racket/base syntax/parse racket/syntax syntax/id-table)
+
+(require (for-syntax racket/base syntax/parse racket/syntax syntax/id-table)
          racket/class)
 
 (struct binary (read write))
@@ -20,8 +21,8 @@ require (for-syntax racket/base syntax/parse racket/syntax syntax/id-table)
 (define (read-value type in)
   ((binary-read type) in))
 
-(define (write-value type value out)
-  ((binary-write type) value out))
+(define (write-value type out value)
+  ((binary-write type) out value))
 
 (define (read-object binary-class in . args)
   (send (apply make-object binary-class args) read in))
