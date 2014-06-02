@@ -1,12 +1,18 @@
 #lang racket/base
-(provide binary 
-         binary?
-         read-value 
-         write-value 
-         read-object 
-         define-binary-class
-         binary<%>)
-(require (for-syntax racket/base syntax/parse racket/syntax syntax/id-table)
+(require racket/contract/base)
+(provide (contract-out 
+          [binary (-> (-> input-port? any/c)
+                      (-> any/c output-port? void?)
+                      binary?)]
+          [binary? (-> any/c boolean?)]                  
+          [read-value (-> binary? input-port? any/c)]
+          [write-value (-> binary? any/c output-port? void?)]
+          [read-object (->* ((implementation?/c binary<%>) input-port?) 
+                            #:rest (listof any/c) 
+                            (instanceof/c (implementation?/c binary<%>)))]
+          [binary<%> interface?])
+         define-binary-class)
+require (for-syntax racket/base syntax/parse racket/syntax syntax/id-table)
          racket/class)
 
 (struct binary (read write))
