@@ -1,9 +1,11 @@
 #lang racket/base
 (provide binary 
+         binary?
          read-value 
          write-value 
          read-object 
-         define-binary-class)
+         define-binary-class
+         binary<%>)
 (require (for-syntax racket/base syntax/parse racket/syntax syntax/id-table)
          racket/class)
 
