@@ -20,11 +20,6 @@
 (define (read-object binary-class in . args)
   (send (apply make-object binary-class args) read in))
 
-(begin-for-syntax
-  (define fields (make-free-id-table))
-  (define (get-fields id)
-    (free-id-table-ref fields id null))
-  (define (save-fields! id value) (free-id-table-set! fields id value) (void)))
 
 (define (copy-object old new)
   (for ([f (field-names old)])
@@ -32,15 +27,38 @@
 
 (define binary<%> (interface () read write))
 
+(begin-for-syntax 
+  (define fields (make-free-id-table))
+  (define (get-fields id) (free-id-table-ref fields id null))
+  (define (save-fields! id value) (free-id-table-set! fields id value) (void)))
+
 (define-syntax (define-binary-class stx)
+  (define (not-null? x)
+    (not (free-identifier=? x #'_)))
+  (define (make-reader id+val)
+    (with-syntax ([(FNAME FTYPE) id+val])
+      (if (not-null? #'FNAME)
+          #'(set! FNAME ((binary-read FTYPE) in))
+          #'((binary-read FTYPE) in))))
+  (define (make-writer id+val)
+    (with-syntax ([(FNAME FTYPE) id+val])
+      (if (not-null? #'FNAME)
+          #'((binary-write FTYPE) out FNAME)
+          #'((binary-write FTYPE) out #f))))
   (syntax-parse stx
     [(_ NAME ((FNAME FTYPE) ...) maybe-options ...)
      #'(define-binary-class NAME object% ((FNAME FTYPE) ...) maybe-options ...)]
     [(_ NAME:id SUPER:expr ((FNAME:id FTYPE:expr) ...) (~optional (~seq #:dispatch DISPATCH:expr)))
-     (with-syntax* ([(SUPER-FIELDS ...) (datum->syntax stx (get-fields #'SUPER))]
-                    [(ALL-FIELDS ...) (datum->syntax stx
-                                                     (append (syntax->list #'(SUPER-FIELDS ...))
-                                                             (syntax->list #'(FNAME ...))))]
+     (with-syntax* ([(SUPER-FIELD ...) (datum->syntax stx (get-fields #'SUPER))]
+                    [(NOT-NULL-FIELD ...) 
+                     (filter not-null?
+                             (syntax->list #'(FNAME ...)))]
+                    [(READER ...)
+                     (map make-reader (syntax->list #'((FNAME FTYPE) ...)))]
+                    [(WRITER ...)
+                     (map make-writer (syntax->list #'((FNAME FTYPE) ...)))]
+                    [(ALL-FIELD ...) (append (syntax->list #'(SUPER-FIELD ...))
+                                             (syntax->list #'(NOT-NULL-FIELD ...)))]
                     [RETURN (if (attribute DISPATCH)
                                 #'(let ([obj (new DISPATCH)])
                                     (copy-object this obj)
@@ -52,33 +70,34 @@
              (if (implementation? SUPER binary<%>)
                  (class SUPER
                    (super-new)
-                   (inherit-field SUPER-FIELDS ...)
-                   (field (FNAME #f) ...)
+                   (inherit-field SUPER-FIELD ...)
+                   (field (NOT-NULL-FIELD #f) ...)
                    (define/override (read in [skip-dispatch? #f])
                      (super read in #t)
-                     (set! FNAME ((binary-read FTYPE) in)) ...
+                     READER ...
                      (if skip-dispatch? this RETURN))
                    (define/override (write out)
                      (super write out)
-                     ((binary-write FTYPE) out FNAME) ...))
+                     WRITER ...))
                  (class* SUPER (binary<%>)
                    (super-new)
-                   (inherit-field SUPER-FIELDS ...)
-                   (field (FNAME #f) ...)
+                   (inherit-field SUPER-FIELD ...)
+                   (field (NOT-NULL-FIELD #f) ...)
                    (define/public (read in [skip-dispatch? #f])
-                     (set! FNAME ((binary-read FTYPE) in)) ...
+                     READER ...
                      (if skip-dispatch? this RETURN))
                    (define/public (write out)
-                     ((binary-write FTYPE) out FNAME) ...))))
+                     WRITER ...))))
            (define-syntaxes ()
-             (begin0 (values) (save-fields! #'NAME (list 'ALL-FIELDS ...))))))]))
+             (begin0 (values) (save-fields! #'NAME (list 'ALL-FIELD ...))))))]))
+
 
 (module+ test
   (require rackunit)
   (define u1 (binary (λ (in) 'ok) (λ (value out) (void))))
   (define u2 (binary (λ (in) 'ok2) (λ (value out) (void))))
   (test-begin
-   (define-binary-class test ((a u1)))
+   (define-binary-class test ((a u1) (_ u1) (_ u1)))
    (define-binary-class test2 test ((b u2)))
    (define tmp (read-object test2 1))
    (check-eq? (get-field a tmp) 'ok)
