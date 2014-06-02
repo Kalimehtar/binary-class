@@ -108,10 +108,10 @@ Binary class implements interface @racket[binary<%>]:
 To make the usage of the module easier there are some shortcuts 
 for reading and writing binary values.
 
-@defproc[(read-value [type binary?] [in input-port?]) any/c]{
+@defproc[(read-value [type binary?] [in input-port?]) any]{
 Reads binary value from input port and returns it.}
 
-@defproc[(write-value [type binary?] [out output-port?]) void?]{
+@defproc[(write-value [type binary?] [out output-port?] [value any/c]) void?]{
 Writes binary value to output port.}
 
 @defproc[(read-object [binary-class (implementation?/c binary<%>)] 
