@@ -21,7 +21,6 @@
 (define (read-object binary-class in . args)
   (send (apply make-object binary-class args) read in))
 
-
 (define (copy-object old new)
   (for ([f (field-names old)])
     (dynamic-set-field! f new (dynamic-get-field f old))))
@@ -67,9 +66,10 @@
                                     obj)
                                 #'this)])
        #'(begin
-           (define NAME 
-             (if (implementation? SUPER binary<%>)
-                 (class SUPER
+           (define a-super SUPER)
+           (define NAME
+             (if (implementation? a-super binary<%>)
+                 (class a-super
                    (super-new)
                    (inherit-field SUPER-FIELD ...)
                    (field (NOT-NULL-FIELD #f) ...)
@@ -80,7 +80,7 @@
                    (define/override (write out)
                      (super write out)
                      WRITER ...))
-                 (class* SUPER (binary<%>)
+                 (class* a-super (binary<%>)
                    (super-new)
                    (inherit-field SUPER-FIELD ...)
                    (field (NOT-NULL-FIELD #f) ...)
