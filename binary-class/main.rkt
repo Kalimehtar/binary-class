@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/contract/base)
+(require racket/contract/base binary-class/unsafe)
 (provide (contract-out 
           [binary (-> (-> input-port? any)
                       (-> output-port? any/c void?)

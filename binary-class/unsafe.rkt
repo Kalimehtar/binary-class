@@ -1,9 +1,9 @@
 #lang racket/base
-(provide binary 
-         binary? 
+(provide binary
+         binary?
          read-value
-         write-value 
-         read-object 
+         write-value
+         read-object
          binary<%>
          define-binary-class)
 
