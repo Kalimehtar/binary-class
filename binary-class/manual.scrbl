@@ -1,12 +1,17 @@
 #lang scribble/manual
 @(require (for-label racket binary-class))
 
-@title{Binary class for parsing and saving binary data}
+@title{Binary-class: parsing and saving binary data}
 @author{@(author+email "Roman Klochkov" "kalimehtar@mail.ru")}
 
 @(defmodule binary-class)
 
-@section{Main}
+The @racket[binary-class] combines @racket[binary-class/base], @racket[binary-class/common] and
+@racket[binary-class/string].
+
+@section{Binary class. Base system.}
+
+@(defmodule binary-class/base)
 
 This package is based upon idea in 
 @(hyperlink "http://www.gigamonkeys.com/book/practical-parsing-binary-files.html" 
@@ -103,7 +108,7 @@ Binary class implements interface @racket[binary<%>]:
   @defmethod[(write [out output-port?]) void?]{
      Writes the object to @racket[out]}}
 
-@section{Utilities}
+@subsection{Utilities}
 
 To make the usage of the module easier there are some shortcuts 
 for reading and writing binary values.
@@ -120,3 +125,82 @@ Writes binary value to output port.}
          (instanceof/c (implementation?/c binary<%>))]{
 Creates binary object, fills it from the input port and returns it. The @racket[init-v]s 
 are passed as initialization arguments to @racket[make-object].}
+
+@section{Common datatypes}
+
+@(defmodule binary-class/common)
+
+Most common data in binary file is integer numbers in little-endian or big-endian order, 
+or bytestrings. So you may use them from this module.
+
+@defproc[(unsigned-integer [bytes exact-positive-integer?] 
+                           [bits-per-byte exact-positive-integer? 8])
+         binary?]{Returns binary datatype for unsigned integer with big-endian order}
+
+@defproc[(unsigned-integer-le [bytes exact-positive-integer?] 
+                              [bits-per-byte exact-positive-integer? 8])
+         binary?]{Returns binary datatype for unsigned integer with little-endian order}
+
+@deftogether[(@defthing[u1 binary?]
+              @defthing[u2 binary?]
+              @defthing[u3 binary?]
+              @defthing[u4 binary?]
+              @defthing[l1 binary?]
+              @defthing[l2 binary?]
+              @defthing[l3 binary?]
+              @defthing[l4 binary?])]{
+Binary types for big-endian @racket[u1] -- @racket[u4] and @racket[l1] -- @racket[l4] 
+little-edian ones. Number 1--4 displays the length of the integer in bytes}
+
+@defproc[(discard [bytes exact-positive-integer?]) binary?]{
+Reads given number of bytes and return @racket[#f]. Writes given number of null bytes.
+Recommended for use with field id @racket[_] when you see "Reserved" in the specification.}
+
+@defproc[(bytestring [bytes exact-positive-integer?]) binary?]{
+Reads and writes bytes to @racket[bytes?] from binary port and vice versa}.
+
+@section{Strings}
+
+@(defmodule binary-class/string)
+
+In this module there are several binary types for reading and writing @racket[string?].
+
+@defproc[(generic-string [length exact-positive-integer?] [character-type binary?]) binary?]{
+Returns type, describing string with given fixed @racket[length] and @racket[character-type],
+that describes how to read and write every @racket[char?].}
+
+@defproc[(generic-terminated-string [terminator char?] [character-type binary?]) binary?]{
+Returns type, describing string with given @racket[terminator] and @racket[character-type].
+@racket[terminator] is present in file, but not in Racket string.}
+
+@defproc[(iso-8859-1-string [length exact-positive-integer?]) binary?]{
+String, represented in file as a ISO 8859-1 string with fixed @racket[length]. 
+Only @racket[char?]'s with codes up to 255 allowed}
+
+@defproc[(iso-8859-1-terminated-string [terminator char? #\nul]) binary?]{
+String, represented in file as a ISO 8859-1 string with @racket[terminator].
+Only @racket[char?]'s with codes up to 255 allowed}
+
+@defproc[(ucs-2-string [length exact-positive-integer?]) binary?]{
+String, represented in file as a UCS-2 string with fixed @racket[length]. 
+Only @racket[char?]'s with codes up to 65535 allowed}
+
+@defproc[(ucs-2-terminated-string [terminator char? #\nul]) binary?]{
+String, represented in file as a UCS-2 string with @racket[terminator].
+Only @racket[char?]'s with codes up to 65535 allowed}
+
+@section{Performance and safety}
+
+By default contracts in @racket[binary-class]/* check only function arguments. If you need more
+security or more performance, you may use instead their submodules: Submodule @racket[safe]
+gives maximum safety and contract checks, submodule @racket[unsafe] gives maximum performance,
+but no check at all.
+
+@(defmodule #:multi ((submod binary-class safe)
+                     (submod binary-class unsafe)
+                     (submod binary-class/base safe)
+                     (submod binary-class/base unsafe)
+                     (submod binary-class/common safe)
+                     (submod binary-class/common unsafe)
+                     (submod binary-class/string safe)
+                     (submod binary-class/string unsafe)))
