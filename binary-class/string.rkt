@@ -47,10 +47,10 @@
        (write-byte byte out)
        (void))))
   
-  (define (iso-8859-1-string length) (generic-string iso-8859-1-char length))
+  (define (iso-8859-1-string length) (generic-string length iso-8859-1-char))
   
   (define (iso-8859-1-terminated-string [terminator #\nul])
-    (generic-terminated-string iso-8859-1-char terminator)) 
+    (generic-terminated-string terminator iso-8859-1-char)) 
   
   (define (ucs-2-char swap)
     (define type (if swap l2 u2))
@@ -75,7 +75,7 @@
     (binary 
      (λ (in)
        (define byte-order-mark (read-value u2 in))
-       (read-value (generic-string characters (ucs-2-char-type byte-order-mark)) in))
+       (read-value (generic-string characters (ucs-2-char (ucs-2-char-type byte-order-mark))) in))
      (λ (out value)
        (write-value u2 out #xfeff)
        (write-value (generic-string characters (ucs-2-char #f)) out value))))
