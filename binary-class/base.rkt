@@ -22,7 +22,7 @@
     ((binary-write type) out value))
   
   (define (read-object binary-class in . args)
-    (send (apply make-object binary-class args) read in))
+    (send (apply make-object binary-class args) read in args))
   
   (define (copy-object old new)
     (for ([f (field-names old)])
@@ -32,7 +32,10 @@
   
   (begin-for-syntax 
     (define fields (make-free-id-table))
-    (define (get-fields id) (free-id-table-ref fields id null))
+    (define (get-fields id) 
+      (if (identifier? id)
+          (free-id-table-ref fields id null)
+          null))
     (define (save-fields! id value) (free-id-table-set! fields id value) (void)))
   
   (define-syntax (define-binary-class stx)
@@ -64,7 +67,7 @@
                                   [(ALL-FIELD ...) (append (syntax->list #'(SUPER-FIELD ...))
                                                            (syntax->list #'(NOT-NULL-FIELD ...)))]
                                   [RETURN (if (attribute DISPATCH)
-                                              #'(let ([obj (new DISPATCH)])
+                                              #'(let ([obj (apply make-object DISPATCH args)])
                                                   (copy-object this obj)
                                                   (send obj read in)
                                                   obj)
@@ -77,8 +80,10 @@
                                              (super-new)
                                              (inherit-field SUPER-FIELD ...)
                                              (field (NOT-NULL-FIELD #f) ...)
-                                             (define/override (read in [skip-dispatch? #f])
-                                               (super read in #t)
+                                             (define/override (read in 
+                                                                    [args null] 
+                                                                    [skip-dispatch? #f])
+                                               (super read in args #t)
                                                READER ...
                                                (if skip-dispatch? this RETURN))
                                              (define/override (write out)
@@ -88,7 +93,9 @@
                                              (super-new)
                                              (inherit-field SUPER-FIELD ...)
                                              (field (NOT-NULL-FIELD #f) ...)
-                                             (define/public (read in [skip-dispatch? #f])
+                                             (define/public (read in 
+                                                                  [args null]
+                                                                  [skip-dispatch? #f])
                                                READER ...
                                                (if skip-dispatch? this RETURN))
                                              (define/public (write out)
@@ -114,6 +121,7 @@
 
 (module+ test
   (require rackunit)
+  (displayln "Testing...")
   (define u1 (binary (λ (in) 'ok) (λ (value out) (void))))
   (define u2 (binary (λ (in) 'ok2) (λ (value out) (void))))
   (test-begin

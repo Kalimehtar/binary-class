@@ -81,7 +81,7 @@ You may even insert any expression after @racket[#:dispatch]
 Besides, you may use inheritance: simply add super class after the class name.
 @racketblock[
 (define-binary-class id3v2.2-tag id3-tag
-  ((frames (id3-frames :tag-size size :frame-type 'id3v2.2-frame))))
+  ((frames (id3-frames size id3v2.2-frame))))
 ]
 
 If you use @racket[#:dispatch], result class should be either inherited from current class, or 
@@ -95,11 +95,16 @@ be also not binary class, but then it should have no methods @racket[read] and @
          #:contracts ([superclass-expr class?] 
                       [field-expr binary?]
                       [dispatch-expr (implementation?/c binary<%>)])]{
-Defines new binary class and binds it to @racket[_id]. @racket[field-id] may be
-@racket[_]. This means, that the field is omitted. In this case no field is created 
-in class, but the data is read and is written from/to the binary port. Value for
-writing is @racket[#f]}
-                                                                     
+Defines new binary class and binds it to @racket[_id]. 
+                                         
+@racket[field-id] may be @racket[__]. This means, that the field is omitted. 
+In this case no field is created in class, but the data is read and is written 
+from/to the binary port. Value for writing is @racket[#f].
+
+@racket[_superclass-expr] may be either id of a binary class, or any expression, 
+returning non-binary class. If you return binary class from expression, then it is not error,
+but fields of given class will not be visible inside the current class @racket[field-expr]s.}
+
 Binary class implements interface @racket[binary<%>]:
 
 @definterface[binary<%> (read write)]{
