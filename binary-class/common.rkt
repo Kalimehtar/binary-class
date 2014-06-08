@@ -53,7 +53,7 @@
   (define (discard length)
     (binary
      (λ (in)
-       (read-bytes length)
+       (read-bytes length in)
        #f)
      (λ (out dummy)
        (write-bytes (make-bytes length) out)
@@ -62,7 +62,7 @@
   (define (bytestring length)
     (binary
      (λ (in)
-       (read-bytes length))
+       (read-bytes length in))
      (λ (out value)
        (write-bytes value out 0 length)))))
 (require 'unsafe)
