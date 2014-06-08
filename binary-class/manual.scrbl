@@ -90,12 +90,14 @@ be also not binary class, but then it should have no methods @racket[read] and @
 
 @defform[(define-binary-class id [superclass-expr]
            ((field-id field-expr) ...) 
-           [#:dispatch dispatch-expr])
+           [#:dispatch dispatch-expr]
+           class-body ...)
          #:grammar ([field-id _ id])
          #:contracts ([superclass-expr class?] 
                       [field-expr binary?]
                       [dispatch-expr (implementation?/c binary<%>)])]{
-Defines new binary class and binds it to @racket[_id]. 
+Defines new binary class and binds it to @racket[_id]. @racket[class-body] --- any definitions, 
+allowed inside @racket[class]
                                          
 @racket[field-id] may be @racket[__]. This means, that the field is omitted. 
 In this case no field is created in class, but the data is read and is written 

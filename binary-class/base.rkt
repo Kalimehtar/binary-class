@@ -52,10 +52,11 @@
             #'((binary-write FTYPE) out FNAME)
             #'((binary-write FTYPE) out #f))))
     (syntax-parse stx
-                  [(_ NAME ((FNAME FTYPE) ...) maybe-options ...)
-                   #'(define-binary-class NAME object% ((FNAME FTYPE) ...) maybe-options ...)]
+                  [(_ NAME ((FNAME FTYPE) ...) BODY ...)
+                   #'(define-binary-class NAME object% ((FNAME FTYPE) ...) BODY ...)]
                   [(_ NAME:id SUPER:expr ((FNAME:id FTYPE:expr) ...)
-                      (~optional (~seq #:dispatch DISPATCH:expr)))
+                      (~optional (~seq #:dispatch DISPATCH:expr))
+                      BODY ...)
                    (with-syntax* ([(SUPER-FIELD ...) (datum->syntax stx (get-fields #'SUPER))]
                                   [(NOT-NULL-FIELD ...) 
                                    (filter not-null?
@@ -69,7 +70,7 @@
                                   [RETURN (if (attribute DISPATCH)
                                               #'(let ([obj (apply make-object DISPATCH args)])
                                                   (copy-object this obj)
-                                                  (send obj read in)
+                                                  (send obj read in args #f #t)
                                                   obj)
                                               #'this)])
                                  #'(begin
@@ -82,26 +83,31 @@
                                              (field (NOT-NULL-FIELD #f) ...)
                                              (define/override (read in 
                                                                     [args null] 
-                                                                    [skip-dispatch? #f])
-                                               (super read in args #t)
+                                                                    [skip-dispatch? #f]
+                                                                    [skip-super? #f])
+                                               (unless skip-super?
+                                                 (super read in args #t))
                                                READER ...
                                                (if skip-dispatch? this RETURN))
                                              (define/override (write out)
                                                (super write out)
                                                WRITER ...
-                                               (void)))
+                                               (void))
+                                             BODY ...)
                                            (class* a-super (binary<%>)
                                              (super-new)
                                              (inherit-field SUPER-FIELD ...)
                                              (field (NOT-NULL-FIELD #f) ...)
                                              (define/public (read in 
                                                                   [args null]
-                                                                  [skip-dispatch? #f])
+                                                                  [skip-dispatch? #f]
+                                                                  [skip-super? #f])
                                                READER ...
                                                (if skip-dispatch? this RETURN))
                                              (define/public (write out)
                                                WRITER ...
-                                               (void)))))
+                                               (void))
+                                             BODY ...)))
                                      (define-syntaxes ()
                                        (begin0 (values) 
                                                (save-fields! #'NAME (list 'ALL-FIELD ...))))))])))
