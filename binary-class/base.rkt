@@ -88,7 +88,8 @@
                                                (if skip-dispatch? this RETURN))
                                              (define/override (write out)
                                                (super write out)
-                                               WRITER ...))
+                                               WRITER ...
+                                               (void)))
                                            (class* a-super (binary<%>)
                                              (super-new)
                                              (inherit-field SUPER-FIELD ...)
@@ -99,7 +100,8 @@
                                                READER ...
                                                (if skip-dispatch? this RETURN))
                                              (define/public (write out)
-                                               WRITER ...))))
+                                               WRITER ...
+                                               (void)))))
                                      (define-syntaxes ()
                                        (begin0 (values) 
                                                (save-fields! #'NAME (list 'ALL-FIELD ...))))))])))
