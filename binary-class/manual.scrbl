@@ -88,14 +88,15 @@ If you use @racket[#:dispatch], result class should be either inherited from cur
 at least to have all fields that the current class has. Super class of a binary class may 
 be also not binary class, but then it should have no methods @racket[read] and @racket[write].
 
-@defform[(define-binary-class id [superclass-expr]
-           ((field-id field-expr) ...) 
-           [#:dispatch dispatch-expr]
-           class-body ...)
-         #:grammar ([field-id _ id])
-         #:contracts ([superclass-expr class?] 
-                      [field-expr binary?]
-                      [dispatch-expr (implementation?/c binary<%>)])]{
+@defform/subs[
+(define-binary-class id [superclass-expr]
+  ((field-id field-expr) ...) 
+  [#:dispatch dispatch-expr]
+  class-body ...)
+([field-id _ id])
+#:contracts ([superclass-expr class?] 
+             [field-expr binary?]
+             [dispatch-expr (is-a?/c binary<%>)])]{
 Defines new binary class and binds it to @racket[_id]. @racket[class-body] --- any definitions, 
 allowed inside @racket[class]
                                          
@@ -110,7 +111,7 @@ but fields of given class will not be visible inside the current class @racket[f
 Binary class implements interface @racket[binary<%>]:
 
 @definterface[binary<%> (read write)]{
-  @defmethod[(read [in input-port?]) (instanceof/c (implementation?/c binary<%>))]{
+  @defmethod[(read [in input-port?]) (is-a?/c binary<%>)]{
      Reads the object from @racket[in] and returns it.}
   @defmethod[(write [out output-port?]) void?]{
      Writes the object to @racket[out]}}
@@ -129,7 +130,7 @@ Writes binary value to output port.}
 @defproc[(read-object [binary-class (implementation?/c binary<%>)] 
                       [in input-port?]
                       [init-v any/c] ...)
-         (instanceof/c (implementation?/c binary<%>))]{
+         (is-a?/c binary<%>)]{
 Creates binary object, fills it from the input port and returns it. The @racket[init-v]s 
 are passed as initialization arguments to @racket[make-object].}
 
@@ -211,3 +212,46 @@ but no check at all.
                      (submod binary-class/common unsafe)
                      (submod binary-class/string safe)
                      (submod binary-class/string unsafe)))
+
+@section{Contracts}
+
+@(defmodule binary-class/contract)
+
+@defproc[(binary-integer/c [bytes exact-integer?] [bits-per-byte 8]) flat-contract?]{
+Defines contract for @racket[unsigned-integer] with given @racket[_bytes] and @racket[_bits-per-byte]}
+
+@defform/subs[
+#:literals (field init init-field inherit inherit-field super inner override augment augride absent)
+
+(class/c binary-class-id maybe-opaque member-spec ...)
+
+([maybe-opaque
+  (code:line)
+  (code:line #:opaque)]
+
+ [member-spec
+  method-spec
+  (field field-spec ...)
+  (init field-spec ...)
+  (init-field field-spec ...)
+  (inherit method-spec ...)
+  (inherit-field field-spec ...)
+  (super method-spec ...)
+  (inner method-spec ...)
+  (override method-spec ...)
+  (augment method-spec ...)
+  (augride method-spec ...)
+  (absent absent-spec ...)]
+
+ [method-spec
+  method-id
+  (method-id method-contract-expr)]
+ [field-spec
+  field-id
+  (field-id contract-expr)]
+ [absent-spec
+  method-id
+  (field field-id ...)])]{
+
+Defines contract for binary class. @racket[_binary-class-id] should be an id of existing binary class.
+Rest arguments are the same as for @racket[class/c].}
