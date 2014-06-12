@@ -217,7 +217,7 @@ but no check at all.
 
 @(defmodule binary-class/contract)
 
-@defproc[(binary-integer/c [bytes exact-integer?] [bits-per-byte 8]) flat-contract?]{
+@defproc[(binary-integer/c [bytes exact-integer?] [bits-per-byte exact-integer? 8]) flat-contract?]{
 Defines contract for @racket[unsigned-integer] with given @racket[_bytes] and @racket[_bits-per-byte]}
 
 @defform/subs[
