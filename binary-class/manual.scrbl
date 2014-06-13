@@ -224,7 +224,7 @@ and @racket[_bits-per-byte]. Checks that value is exact integer and in avalable 
 @defform/subs[
 #:literals (field init init-field inherit inherit-field super inner override augment augride absent)
 
-(class/c binary-class-id maybe-opaque member-spec ...)
+(binary-class/c binary-class-id maybe-opaque member-spec ...)
 
 ([maybe-opaque
   (code:line)
