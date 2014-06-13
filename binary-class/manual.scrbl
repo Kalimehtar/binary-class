@@ -43,8 +43,8 @@ Here @racket[iso-8859-1-bytes] should be a function of one argument, that return
 
 @defstruct[binary ([read (input-port? . -> . any)] 
                    [write (output-port? any/c . -> . void?)])]{
-  A structure type for binary values. @racket[read] is a function, that reads from input port and
-returns the data. Write -- takes output-port and data to write the data in port.
+  A structure type for binary values. @racket[_read] is a function, that reads from input port and
+returns the data. @racket[_write] -- takes output-port and data to write the data in port.
 }
 
 Note, that you may use values of previous fields to calculate the type of the next. 
@@ -293,5 +293,5 @@ Recognizes UCS-2 strings that doesn't have @racket[_terminator] character.}
 
 @defproc[(string-terminated/c [terminator char?] [char-contract flat-contract? any/c]) 
          flat-contract?]{
-Recognizes UCS-2 strings that doesn't have @racket[_terminator] character and whose characters
+Recognizes strings that doesn't have @racket[_terminator] character and whose characters
 match @racket[_char-contract].}
