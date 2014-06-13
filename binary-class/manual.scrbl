@@ -218,7 +218,8 @@ but no check at all.
 @(defmodule binary-class/contract)
 
 @defproc[(binary-integer/c [bytes exact-integer?] [bits-per-byte exact-integer? 8]) flat-contract?]{
-Defines contract for @racket[unsigned-integer] with given @racket[_bytes] and @racket[_bits-per-byte]}
+Defines contract for @racket[unsigned-integer] with given @racket[_bytes] 
+and @racket[_bits-per-byte]. Checks that value is exact integer and in avalable range.}
 
 @defform/subs[
 #:literals (field init init-field inherit inherit-field super inner override augment augride absent)
@@ -252,6 +253,23 @@ Defines contract for @racket[unsigned-integer] with given @racket[_bytes] and @r
  [absent-spec
   method-id
   (field field-id ...)])]{
-
 Defines contract for binary class. @racket[_binary-class-id] should be an id of existing binary class.
 Rest arguments are the same as for @racket[class/c].}
+
+@deftogether[(@defthing[u1? flat-contract?]
+              @defthing[u2? flat-contract?]
+              @defthing[u3? flat-contract?]
+              @defthing[u4? flat-contract?])]{
+Contracts for @racket[u1] -- @racket[u4] and @racket[l1] -- @racket[l4].}
+
+@defthing[iso-8859-1? flat-contract?]{
+Contract for ISO 8859-1 string. Asserts that all chars can be converted to ISO 8859-1 charset.}
+
+@defthing[ucs-2? flat-contract?]{
+Contract for UCS-2 string. Asserts that all chars can be converted to UCS-2 charset.}
+
+@defproc[(iso-8859-1-len/c [len real?]) flat-contract?]{
+Recognizes ISO 8859-1 strings that have fewer than @racket[_len] characters}
+
+@defproc[(ucs-2-len/c [len real?]) flat-contract?]{
+Recognizes UCS-2 strings that have fewer than @racket[_len] characters}
