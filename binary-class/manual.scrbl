@@ -43,7 +43,7 @@ Here @racket[iso-8859-1-bytes] should be a function of one argument, that return
 
 @defstruct[binary ([read (input-port? . -> . any)] 
                    [write (output-port? any/c . -> . void?)])]{
-  A strucure type for binary values. Read is a function, that reads from input port and
+  A structure type for binary values. @racket[read] is a function, that reads from input port and
 returns the data. Write -- takes output-port and data to write the data in port.
 }
 

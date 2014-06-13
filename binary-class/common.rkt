@@ -16,9 +16,10 @@
                    (- shift bits-per-byte)
                    (add1 byte)))))
      (λ (out value)
+       (define value* (or value 0))
        (let loop ([shift (+ max-shift bits-per-byte)] [byte 1])
          (define next-shift (- shift bits-per-byte))
-         (write-byte (bitwise-bit-field value next-shift shift) out)
+         (write-byte (bitwise-bit-field value* next-shift shift) out)
          (if (= byte bytes)
              (void)
              (loop next-shift (add1 byte)))))))
@@ -38,6 +39,7 @@
                    (+ shift bits-per-byte)
                    (add1 byte)))))
      (λ (out value)
+       (define value* (or value 0))
        (let loop ([shift 0] [byte 1])
          (define next-shift (+ shift bits-per-byte))
          (write-byte (bitwise-bit-field value shift next-shift) out)
@@ -64,7 +66,8 @@
      (λ (in)
        (read-bytes length in))
      (λ (out value)
-       (write-bytes value out 0 length)))))
+       (define value* (or value #""))
+       (write-bytes value* out 0 length)))))
 (require 'unsafe)
 
 (provide/contract
@@ -99,7 +102,7 @@
    [u4 (binary/c u4?)]
    [l4 (binary/c u4?)]
    [discard (-> exact-positive-integer? (binary/c #f))]
-   [bytestring (-> exact-positive-integer? (binary/c bytes?))]))
+   [bytestring (-> exact-positive-integer? (binary/c (or/c #f bytes?)))]))
 
 (module+ test
   (require rackunit)

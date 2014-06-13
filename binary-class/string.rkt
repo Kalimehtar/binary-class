@@ -15,9 +15,10 @@
        (for ([i (in-range length)])
          (string-set! string i (read-value character-type in)))
        string)
-     (λ (out string)
+     (λ (out value)
+       (define value* (or value ""))
        (for ([i (in-range length)])
-         (write-value character-type out (string-ref string i)))
+         (write-value character-type out (string-ref value* i)))
        (void))))
   
   (define (generic-terminated-string terminator character-type)
@@ -30,8 +31,8 @@
            (write-char char string-port)
            (loop)))
        (get-output-string string-port))
-     (λ (out string)
-       (for ([c (in-string string)])
+     (λ (out value)
+       (for ([c (in-string (or value ""))])
          (write-value character-type out c))
        (write-value character-type out terminator)
        (void))))
@@ -78,7 +79,7 @@
        (read-value (generic-string characters (ucs-2-char (ucs-2-char-type byte-order-mark))) in))
      (λ (out value)
        (write-value u2 out #xfeff)
-       (write-value (generic-string characters (ucs-2-char #f)) out value))))
+       (write-value (generic-string characters (ucs-2-char #f)) out (or value "")))))
   
   (define (ucs-2-terminated-string [terminator #\nul])
     (define characters (sub1 (/ length 2)))
@@ -88,7 +89,7 @@
        (read-value (generic-terminated-string terminator (ucs-2-char-type byte-order-mark)) in))
      (λ (out value)
        (write-value u2 out #xfeff)
-       (write-value (generic-terminated-string terminator (ucs-2-char #f)) out value)))))
+       (write-value (generic-terminated-string terminator (ucs-2-char #f)) out (or value ""))))))
 
 (require racket/contract 'unsafe (submod "base.rkt" unsafe))
 
@@ -104,7 +105,7 @@
   (require "contract.rkt")
   (provide/contract 
    [generic-string (->i ([length exact-positive-integer?] [char (binary/c char?)])
-                        [result (length) (binary/c (string-len/c length))])]
+                        [result (length) (binary/c (or/c #f (string-len/c length)))])]
    [generic-terminated-string (->i ([terminator char?] [char (binary/c char?)])
                                    [result (terminator) 
                                            (binary/c (string-terminated/c terminator))])]

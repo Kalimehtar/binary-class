@@ -28,7 +28,7 @@
             (-> output-port? value-contract void?)))
 
 (define (binary-integer/c bytes [bits-per-byte 8])
-  (integer-in 0 (sub1 (expt 2 (* bytes bits-per-byte)))))
+  (or/c #f (integer-in 0 (sub1 (expt 2 (* bytes bits-per-byte))))))
 
 (define u1? (binary-integer/c 1))
 (define u2? (binary-integer/c 2))
@@ -46,10 +46,10 @@
 (define ucs-2-char? (flat-named-contract 'ucs-2-char? (λ (c) (< (char->integer c) 65536))))
 
 (define iso-8859-1-string?
-  (and/c string? (stringof/c iso-8859-1-char?)))
+  (or/c #f (and/c string? (stringof/c iso-8859-1-char?))))
 
 (define ucs-2-string?
-  (and/c string? (stringof/c ucs-2-char?)))
+  (or/c #f (and/c string? (stringof/c ucs-2-char?))))
 
 (define (iso-8859-1-len/c length)
   (and/c iso-8859-1-string? (string-len/c length)))
@@ -58,7 +58,7 @@
   (and/c ucs-2-string? (string-len/c length)))
 
 (define (string-terminated/c terminator [char-contract any/c])
-  (and/c string? (stringof/c (and/c char-contract (not/c terminator)))))
+  (or/c #f (and/c string? (stringof/c (and/c char-contract (not/c terminator))))))
 
 (define (iso-8859-1-terminated/c terminator)
   (string-terminated/c terminator iso-8859-1-char?))
