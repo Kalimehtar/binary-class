@@ -110,7 +110,7 @@ but fields of given class will not be visible inside the current class @racket[f
 
 Binary class implements interface @racket[binary<%>]:
 
-@definterface[binary<%> (read write)]{
+@definterface[binary<%> ()]{
   @defmethod[(read [in input-port?]) (is-a?/c binary<%>)]{
      Reads the object from @racket[in] and returns it.}
   @defmethod[(write [out output-port?]) void?]{
