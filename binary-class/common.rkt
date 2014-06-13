@@ -82,29 +82,24 @@
  [bytestring (-> exact-positive-integer? binary?)])
 
 (module* safe #f
-  (define (binary/c value-contract) 
-    (struct/c binary 
-              (-> input-port? value-contract)
-              (-> output-port? value-contract void?)))
-  (define (in-bits/c bits) (between/c 0 (sub1 (arithmetic-shift 1 bits))))
+  (require "contract.rkt")
   (define binary-integer/c
     (->i ([bytes exact-positive-integer?])
-                          ([bits-per-byte exact-positive-integer?])
-                          [result (bytes bits-per-byte)                                  
-                                  (binary/c (in-bits/c (* bytes bits-per-byte)))]))
+         ([bits-per-byte exact-positive-integer?])
+         [result (bytes bits-per-byte) (binary/c (binary-integer/c bytes bits-per-byte))]))
   (provide/contract
    [unsigned-integer binary-integer/c]
    [unsigned-integer-le binary-integer/c]
-   [u1 (binary/c (in-bits/c 8))]
-   [l1 (binary/c (in-bits/c 8))]
-   [u2 (binary/c (in-bits/c 16))]
-   [l2 (binary/c (in-bits/c 16))]
-   [u3 (binary/c (in-bits/c 24))]
-   [l3 (binary/c (in-bits/c 24))]
-   [u4 (binary/c (in-bits/c 32))]
-   [l4 (binary/c (in-bits/c 32))]
-   [discard (binary/c #f)]
-   [bytestring (binary/c bytes?)]))
+   [u1 (binary/c u1?)]
+   [l1 (binary/c u1?)]
+   [u2 (binary/c u2?)]
+   [l2 (binary/c u2?)]
+   [u3 (binary/c u3?)]
+   [l3 (binary/c u3?)]
+   [u4 (binary/c u4?)]
+   [l4 (binary/c u4?)]
+   [discard (-> exact-positive-integer? (binary/c #f))]
+   [bytestring (-> exact-positive-integer? (binary/c bytes?))]))
 
 (module+ test
   (require rackunit)

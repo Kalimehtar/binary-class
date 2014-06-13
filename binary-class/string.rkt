@@ -101,18 +101,24 @@
  [ucs-2-terminated-string (->* () (char?) any)])
 
 (module* safe #f
-  (define binary-string/c
-    (struct/c binary 
-              (-> input-port? string?)
-              (-> output-port? string? void?)))
-  (define binary-char/c
-    (struct/c binary 
-              (-> input-port? char?)
-              (-> output-port? char? void?)))
+  (require "contract.rkt")
   (provide/contract 
-   [generic-string (-> exact-positive-integer? binary-char/c binary-string/c)]
-   [generic-terminated-string (-> char? binary-char/c binary-string/c)]
-   [iso-8859-1-string (-> exact-positive-integer? binary-string/c)]
-   [iso-8859-1-terminated-string (->* () (char?) binary-string/c)]
-   [ucs-2-string (-> exact-positive-integer? binary-string/c)]
-   [ucs-2-terminated-string (->* () (char?) binary-string/c)]))
+   [generic-string (->i ([length exact-positive-integer?] [char (binary/c char?)])
+                        [result (length) (binary/c (string-len/c length))])]
+   [generic-terminated-string (->i ([terminator char?] [char (binary/c char?)])
+                                   [result (terminator) 
+                                           (binary/c (string-terminated/c terminator))])]
+   [iso-8859-1-string (->i ([length exact-positive-integer?])
+                           [result (length) (binary/c (iso-8859-1-len/c length))])]
+   [iso-8859-1-terminated-string (->i () 
+                                      ([terminator char?]) 
+                                      [result (terminator) 
+                                           (binary/c (string-terminated/c terminator 
+                                                                          iso-8859-1-char?))])]
+   [ucs-2-string (->i ([length exact-positive-integer?])
+                      [result (length) (binary/c (ucs-2-len/c length))])]
+   [ucs-2-terminated-string (->i () 
+                                 ([terminator char?]) 
+                                 [result (terminator) 
+                                         (binary/c (string-terminated/c terminator 
+                                                                        ucs-2-char?))])]))
