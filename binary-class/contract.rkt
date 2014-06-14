@@ -16,10 +16,13 @@
                        [ucs-2-len/c (-> real? flat-contract?)]
                        [iso-8859-1-terminated/c (-> char? flat-contract?)]
                        [ucs-2-terminated/c (-> char? flat-contract?)]))
+
 (define-syntax-rule (binary-class/c CLASS BODY ...)
   (class/c
    BODY ...
-   [read (->m input-port? (is-a?/c CLASS))]
+   [read (->m* (input-port?) 
+               (list? boolean? (or/c (is-a?/c binary<%>) #f))
+               (is-a?/c CLASS))]
    [write (->m output-port? void?)]))
 
 (define (binary/c value-contract) 

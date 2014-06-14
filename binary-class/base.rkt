@@ -6,7 +6,7 @@
            binary?
            read-value
            write-value
-           read-object
+           #;read-object
            binary<%>
            define-binary-class)
   
@@ -15,15 +15,16 @@
   
   (struct binary (read write))
   
-  (define (read-value type in)
-    ((binary-read type) in))
-  
+  (define (read-value type in . args)
+    (if (binary? type)
+        ((binary-read type) in)
+        (send (apply make-object type args) read in args)))
+      
   (define (write-value type out value)
-    ((binary-write type) out value))
-  
-  (define (read-object binary-class in . args)
-    (send (apply make-object binary-class args) read in args))
-  
+    (if (binary? type)
+        ((binary-write type) out value)
+        (send value write out)))
+    
   (define (copy-object old new)
     (for ([f (field-names old)])
       (dynamic-set-field! f new (dynamic-get-field f old))))
@@ -42,19 +43,19 @@
     (define (not-null? x)
       (not (free-identifier=? x #'_)))
     (define (make-reader id+val)
-      (with-syntax ([(FNAME FTYPE) id+val])
+      (with-syntax ([(FNAME FTYPE ARG ...) id+val])
         (if (not-null? #'FNAME)
-            #'(set! FNAME ((binary-read FTYPE) in))
-            #'((binary-read FTYPE) in))))
+            #'(set! FNAME (read-value FTYPE in ARG ...))
+            #'(read-value FTYPE in ARG ...))))
     (define (make-writer id+val)
-      (with-syntax ([(FNAME FTYPE) id+val])
+      (with-syntax ([(FNAME FTYPE ARG ...) id+val])
         (if (not-null? #'FNAME)
-            #'((binary-write FTYPE) out FNAME)
-            #'((binary-write FTYPE) out #f))))
+            #'(write-value FTYPE out FNAME)
+            #'(write-value FTYPE out #f))))
     (syntax-parse stx
-                  [(_ NAME ((FNAME FTYPE) ...) BODY ...)
-                   #'(define-binary-class NAME object% ((FNAME FTYPE) ...) BODY ...)]
-                  [(_ NAME:id SUPER:expr ((FNAME:id FTYPE:expr) ...)
+                  [(_ NAME ((FNAME FTYPE ARG ...) ...) BODY ...)
+                   #'(define-binary-class NAME object% ((FNAME FTYPE ARG ...) ...) BODY ...)]
+                  [(_ NAME:id SUPER:expr ((FNAME:id FTYPE:expr ARG ...) ...)
                       (~optional (~seq #:dispatch DISPATCH:expr))
                       BODY ...)
                    (with-syntax* ([(SUPER-FIELD ...) (datum->syntax stx (get-fields #'SUPER))]
@@ -62,15 +63,15 @@
                                    (filter not-null?
                                            (syntax->list #'(FNAME ...)))]
                                   [(READER ...)
-                                   (map make-reader (syntax->list #'((FNAME FTYPE) ...)))]
+                                   (map make-reader (syntax->list #'((FNAME FTYPE ARG ...) ...)))]
                                   [(WRITER ...)
-                                   (map make-writer (syntax->list #'((FNAME FTYPE) ...)))]
+                                   (map make-writer (syntax->list #'((FNAME FTYPE ARG ...) ...)))]
                                   [(ALL-FIELD ...) (append (syntax->list #'(SUPER-FIELD ...))
                                                            (syntax->list #'(NOT-NULL-FIELD ...)))]
                                   [RETURN (if (attribute DISPATCH)
                                               #'(let ([obj (apply make-object DISPATCH args)])
                                                   (copy-object this obj)
-                                                  (send obj read in args #f #t)
+                                                  (send obj read in args #f this%)
                                                   obj)
                                               #'this)])
                                  #'(begin
@@ -84,11 +85,11 @@
                                              (define/override (read in 
                                                                     [args null] 
                                                                     [skip-dispatch? #f]
-                                                                    [skip-super? #f])
-                                               (unless skip-super?
-                                                 (super read in args #t))
-                                               READER ...
-                                               (if skip-dispatch? this RETURN))
+                                                                    [skip-super-class #f])
+                                               (unless (eq? skip-super-class this%) 
+                                                 (super read in args #t skip-super-class)
+                                                 READER ...
+                                                 (if skip-dispatch? this RETURN)))
                                              (define/override (write out)
                                                (super write out)
                                                WRITER ...
@@ -101,9 +102,10 @@
                                              (define/public (read in 
                                                                   [args null]
                                                                   [skip-dispatch? #f]
-                                                                  [skip-super? #f])
-                                               READER ...
-                                               (if skip-dispatch? this RETURN))
+                                                                  [skip-super-class #f])
+                                               (unless (eq? skip-super-class this%)
+                                                 READER ...
+                                                 (if skip-dispatch? this RETURN)))
                                              (define/public (write out)
                                                WRITER ...
                                                (void))
@@ -119,9 +121,8 @@
              (-> output-port? any/c any)
              binary?)]
  [binary? (-> any/c boolean?)]
- [read-value (-> binary? input-port? any)]
- [write-value (-> binary? output-port? any/c any)]
- [read-object (->* ((implementation?/c binary<%>) input-port?)
+ [write-value (-> (or/c binary? (implementation?/c binary<%>)) output-port? any/c any)]
+ [read-value (->* ((or/c binary? (implementation?/c binary<%>)) input-port?)
                    #:rest list?
                    any)]
  [binary<%> interface?])
@@ -135,7 +136,7 @@
   (test-begin
    (define-binary-class test ((a u1) (_ u1) (_ u1)))
    (define-binary-class test2 test ((b u2)))
-   (define tmp (read-object test2 1))
+   (define tmp (read-value test2 1))
    (check-eq? (get-field a tmp) 'ok)
    (check-eq? (get-field b tmp) 'ok2))
   (test-begin
@@ -144,11 +145,11 @@
    (define return-val (λ (x) (binary (λ (in) x) (λ (value out) (void)))))
    (define-binary-class disp2 disp ((b u1)))
    (define-binary-class disp3 disp ((b u2)))
-   (check-eq? (get-field b (read-object disp 1)) 'ok)
-   (check-eq? (get-field b (read-object disp 2)) 'ok2)
+   (check-eq? (get-field b (read-value disp 1)) 'ok)
+   (check-eq? (get-field b (read-value disp 2)) 'ok2)
    (define-binary-class disp4 disp ((b (return-val (+ a 1)))))
-   (check-eqv? (get-field b (read-object disp4 2)) 3)
-   (check-eqv? (get-field b (read-object disp4 8)) 9)))
+   (check-eqv? (get-field b (read-value disp4 2)) 3)
+   (check-eqv? (get-field b (read-value disp4 8)) 9)))
 
 (module* safe #f
   (provide/contract
@@ -156,9 +157,8 @@
                (-> output-port? any/c void?)
                binary?)]
    [binary? (-> any/c boolean?)]
-   [read-value (-> binary? input-port? any/c)]
-   [write-value (-> binary? output-port? any/c void?)]
-   [read-object (->i ([binary-class (implementation?/c binary<%>)]
+   [write-value (-> (or/c binary? (implementation?/c binary<%>)) output-port? any/c void?)]
+   [read-value (->i ([binary-class (or/c binary? (implementation?/c binary<%>))]
                       [port input-port?])
                      #:rest [args list?]
                      [result (binary-class) (is-a?/c binary-class)])]

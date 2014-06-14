@@ -95,10 +95,10 @@ be also not binary class, but then it should have no methods @racket[_read] and 
   class-body ...)
 ([field-id _ id])
 #:contracts ([superclass-expr class?] 
-             [field-expr binary?]
+             [field-expr (or/c binary? (implementation?/c binary<%>))]
              [dispatch-expr (is-a?/c binary<%>)])]{
 Defines new binary class and binds it to @racket[_id]. @racket[class-body] --- any definitions, 
-allowed inside @racket[class]
+allowed inside @racket[class].
                                          
 @racket[field-id] may be @racket[__]. This means, that the field is omitted. 
 In this case no field is created in class, but the data is read and is written 
@@ -121,18 +121,17 @@ Binary class implements interface @racket[binary<%>]:
 To make the usage of the module easier there are some shortcuts 
 for reading and writing binary values.
 
-@defproc[(read-value [type binary?] [in input-port?]) any]{
+@defproc[(read-value [type (or/c binary? (implementation?/c binary<%>))] 
+                     [in input-port?]
+                     [init-v any/c] ...) 
+         any]{
 Reads binary value from input port and returns it.}
 
-@defproc[(write-value [type binary?] [out output-port?] [value any/c]) void?]{
+@defproc[(write-value [type (or/c binary? (implementation?/c binary<%>))] 
+                      [out output-port?] 
+                      [value any/c]) 
+         void?]{
 Writes binary value to output port.}
-
-@defproc[(read-object [binary-class (implementation?/c binary<%>)] 
-                      [in input-port?]
-                      [init-v any/c] ...)
-         (is-a?/c binary<%>)]{
-Creates binary object, fills it from the input port and returns it. The @racket[init-v]s 
-are passed as initialization arguments to @racket[make-object].}
 
 @section{Common datatypes}
 
