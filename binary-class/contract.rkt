@@ -20,7 +20,7 @@
 (define-syntax-rule (binary-class/c CLASS BODY ...)
   (class/c
    BODY ...
-   [read (->m* (input-port?) 
+   [read (->*m (input-port?) 
                (list? boolean? (or/c (is-a?/c binary<%>) #f))
                (is-a?/c CLASS))]
    [write (->m output-port? void?)]))
