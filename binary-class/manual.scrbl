@@ -90,7 +90,7 @@ be also not binary class, but then it should have no methods @racket[_read] and 
 
 @defform/subs[
 (define-binary-class id [superclass-expr]
-  ((field-id field-expr) ...) 
+  ((field-id field-expr arg ...) ...) 
   [#:dispatch dispatch-expr]
   class-body ...)
 ([field-id _ id])
@@ -106,7 +106,10 @@ from/to the binary port. Value for writing is @racket[#f].
 
 @racket[_superclass-expr] may be either id of a binary class, or any expression, 
 returning non-binary class. If you return binary class from expression, then it is not error,
-but fields of given class will not be visible inside the current class @racket[field-expr]s.}
+but fields of given class will not be visible inside the current class @racket[field-expr]s.
+
+If @racket[_field-expr] returns class, implementing @racket[binary<%>], then provided 
+@racket[_arg]'s will be used as init arguments to @racket[make-object], otherwise they ignored.}
 
 Binary class implements interface @racket[binary<%>]:
 
