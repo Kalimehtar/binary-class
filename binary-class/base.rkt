@@ -86,7 +86,7 @@
                                                                     [args null] 
                                                                     [skip-dispatch? #f]
                                                                     [skip-super-class #f])
-                                               (unless (eq? skip-super-class this%) 
+                                               (unless (eq? skip-super-class NAME) 
                                                  (super read in args #t skip-super-class)
                                                  READER ...
                                                  (if skip-dispatch? this RETURN)))
@@ -103,7 +103,7 @@
                                                                   [args null]
                                                                   [skip-dispatch? #f]
                                                                   [skip-super-class #f])
-                                               (unless (eq? skip-super-class this%)
+                                               (unless (eq? skip-super-class NAME)
                                                  READER ...
                                                  (if skip-dispatch? this RETURN)))
                                              (define/public (write out)
@@ -138,7 +138,7 @@
    (define-binary-class test2 test ((b u2)))
    (define tmp (read-value test2 1))
    (check-eq? (get-field a tmp) 'ok)
-   (check-eq? (get-field b tmp) 'ok2))
+   (check-eq? (get-field b tmp) 'ok2))  
   (test-begin
    (define-binary-class disp ((a read-val)) #:dispatch (if (= a 1) disp2 disp3))
    (define read-val (binary (λ (in) in) (λ (value out) (void))))
