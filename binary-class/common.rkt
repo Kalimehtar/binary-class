@@ -3,9 +3,10 @@
 
 (module unsafe racket/base
   (require (submod "base.rkt" unsafe))
-  (provide unsigned-integer unsigned-integer-le u1 u2 u3 u4 l1 l2 l3 l4 discard bytestring)
+  (provide unsigned-integer unsigned-integer-le u1 u2 u3 u4 l1 l2 l3 l4 discard bytestring
+           signed integer-be integer-le)
   
-  (define (unsigned-integer bytes [bits-per-byte 8])
+  (define (integer-be bytes [bits-per-byte 8])
     (define max-shift (* (sub1 bytes) bits-per-byte))
     (binary
      (λ (in)
@@ -24,12 +25,25 @@
              (void)
              (loop next-shift (add1 byte)))))))
   
-  (define u1 (unsigned-integer 1))
-  (define u2 (unsigned-integer 2))
-  (define u3 (unsigned-integer 3))
-  (define u4 (unsigned-integer 4))
+  (define (signed base bytes [bits-per-byte 8])
+    (define max (expt 2 (sub1 (* bytes bits-per-byte))))
+    (define base-type (base bytes bits-per-byte))
+    (binary
+     (λ (in)
+       (define value (read-value base-type in))
+       (if (>= value max) (- value max max) value))
+     (λ (out value)
+       (define value* (if (negative? value) (+ max (- value)) value))
+       (write-value base-type out value))))
   
-  (define (unsigned-integer-le bytes [bits-per-byte 8])
+  (define unsigned-integer integer-be)
+  
+  (define u1 (integer-be 1))
+  (define u2 (integer-be 2))
+  (define u3 (integer-be 3))
+  (define u4 (integer-be 4))
+  
+  (define (integer-le bytes [bits-per-byte 8])
     (binary
      (λ (in)
        (let loop ([value 0] [shift 0] [byte 0])
@@ -47,10 +61,12 @@
              (void)
              (loop next-shift (add1 byte)))))))
   
-  (define l1 (unsigned-integer-le 1))
-  (define l2 (unsigned-integer-le 2))
-  (define l3 (unsigned-integer-le 3))
-  (define l4 (unsigned-integer-le 4))
+  (define unsigned-integer-le integer-le)
+  
+  (define l1 (integer-le 1))
+  (define l2 (integer-le 2))
+  (define l3 (integer-le 3))
+  (define l4 (integer-le 4))
   
   (define (discard length)
     (binary
@@ -106,6 +122,16 @@
 
 (module+ test
   (require rackunit)
+  (check-eqv? (read-value (signed integer-be 4)
+                          (open-input-bytes 
+                           (let ([res (open-output-bytes)])
+                             (write-value (signed integer-be 4) res -10)
+                             (get-output-bytes res)))) -10)
+  
+  (check-eqv? (read-value (signed integer-be 4)
+                          (open-input-bytes (bytes #b11111111 #b11111111 #b11111111 #b11100010)))
+              -30)
+  
   (check-eqv? (read-value u4 
                           (open-input-bytes 
                            (let ([res (open-output-bytes)])

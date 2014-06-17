@@ -143,13 +143,19 @@ Writes binary value to output port.}
 Most common data in binary file is integer numbers in little-endian or big-endian order, 
 or bytestrings. So you may use them from this module.
 
-@defproc[(unsigned-integer [bytes exact-positive-integer?] 
+@defproc[(integer-be [bytes exact-positive-integer?] 
                            [bits-per-byte exact-positive-integer? 8])
          binary?]{Returns binary datatype for unsigned integer with big-endian order}
 
-@defproc[(unsigned-integer-le [bytes exact-positive-integer?] 
-                              [bits-per-byte exact-positive-integer? 8])
+@defproc[(integer-le [bytes exact-positive-integer?] 
+                     [bits-per-byte exact-positive-integer? 8])
          binary?]{Returns binary datatype for unsigned integer with little-endian order}
+
+@defproc[(signed [base-type (-> exact-positive-integer? exact-positive-integer? binary?)]
+                 [bytes exact-positive-integer?] 
+                 [bits-per-byte exact-positive-integer? 8])
+         binary?]{Returns binary datatype for signed integer. @racket[_base-type] expected
+to be @racket[integer-be] or @racket[integer-le] or any other binary type with same signature.}
 
 @deftogether[(@defthing[u1 binary?]
               @defthing[u2 binary?]
