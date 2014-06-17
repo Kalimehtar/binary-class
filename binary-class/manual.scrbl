@@ -165,15 +165,32 @@ to be @racket[integer-be] or @racket[integer-le] or any other binary type with s
               @defthing[l2 binary?]
               @defthing[l3 binary?]
               @defthing[l4 binary?])]{
-Binary types for big-endian @racket[u1] -- @racket[u4] and @racket[l1] -- @racket[l4] 
-little-edian ones. Number 1--4 displays the length of the integer in bytes}
+Binary types for big-endian integers @racket[u1] -- @racket[u4] 
+and little-edian ones @racket[l1] -- @racket[l4]. Number 1--4 displays the length of the integer in bytes}
+
+@deftogether[(@defthing[float-be binary?]
+              @defthing[float-le binary?]
+              @defthing[double-be binary?]
+              @defthing[double-le binary?])]{
+Binary types for real numbers. Big-endian @racket[float-be], @racket[double-be] and little-edian
+@racket[float-le], @racket[double-le].}
+
+@defproc[(bytestring [bytes exact-positive-integer?]) binary?]{
+Reads and writes bytes to @racket[bytes?] from binary port and vice versa}.
+
+@subsection{Control binary types}
 
 @defproc[(discard [bytes exact-positive-integer?]) binary?]{
 Reads given number of bytes and return @racket[#f]. Writes given number of null bytes.
 Recommended for use with field id @racket[_] when you see "Reserved" in the specification.}
 
-@defproc[(bytestring [bytes exact-positive-integer?]) binary?]{
-Reads and writes bytes to @racket[bytes?] from binary port and vice versa}.
+@defthing[current-position binary?]{Return current position in file. Writes nothing.}
+
+@defproc[(move-position [position exact-nonnegative-integer?]) binary?]{
+Sets position in input port when reading and in output port when writing.}
+
+@defproc[(ref [type binary?] [position exact-nonnegative-integer?]) binary?]{
+Sets given @racket[_position], process @racket[_type], then returns to original position}
 
 @section{Strings}
 

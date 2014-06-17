@@ -4,7 +4,8 @@
 (module unsafe racket/base
   (require (submod "base.rkt" unsafe))
   (provide unsigned-integer unsigned-integer-le u1 u2 u3 u4 l1 l2 l3 l4 discard bytestring
-           signed integer-be integer-le)
+           signed integer-be integer-le
+           float-be float-le double-be double-le current-position ref move-position)
   
   (define (integer-be bytes [bits-per-byte 8])
     (define max-shift (* (sub1 bytes) bits-per-byte))
@@ -68,6 +69,51 @@
   (define l3 (integer-le 3))
   (define l4 (integer-le 4))
   
+  (define (real size be?)
+    (binary
+     (λ (in) 
+       (floating-point-bytes->real (read-bytes size in) be?))
+     (λ (out value) 
+       (write-bytes (real->floating-point-bytes	value size be?) out))))
+  
+  (define float-be (real 4 #t))
+  (define float-le (real 4 #f))
+  (define double-be (real 8 #t))
+  (define double-le (real 8 #f))
+  
+  (define current-position
+    (binary
+     (λ (in)
+       (file-position in))
+     (λ (out dummy)       
+       (void))))
+  
+  (define-syntax-rule (with-current-position STREAM BODY ...)
+    (let ([save #f] [stream STREAM])
+      (dynamic-wind 
+       (λ () (set! save (file-position stream)))
+       (λ () BODY ...)
+       (λ () (file-position stream save)))))
+  
+  (define (ref type position)
+    (binary
+     (λ (in)
+       (with-current-position in
+          (file-position in position)
+          (read-value type in)))
+     (λ (out value)
+       (with-current-position out
+         (file-position out position)
+         (write-value type out value)))))
+  
+  (define (move-position position)
+    (binary
+     (λ (in)
+       (file-position in position)
+       #f)
+     (λ (out value)
+       (file-position out position))))
+  
   (define (discard length)
     (binary
      (λ (in)
@@ -99,8 +145,15 @@
  [l2 binary?]
  [l3 binary?]
  [l4 binary?]
+ [float-be binary?]
+ [float-le binary?]
+ [double-be binary?]
+ [double-le binary?]
  [discard (-> exact-positive-integer? binary?)]
  [bytestring (-> exact-positive-integer? binary?)]
+ [current-position binary?] 
+ [ref (-> binary? exact-nonnegative-integer? binary?)]
+ [move-position (-> exact-nonnegative-integer? binary?)]
  ;; deprecated
  [unsigned-integer (->* (exact-positive-integer?) (exact-positive-integer?) binary?)]
  [unsigned-integer-le (->* (exact-positive-integer?) (exact-positive-integer?) binary?)])
@@ -129,6 +182,13 @@
    [l3 (binary/c u3?)]
    [u4 (binary/c u4?)]
    [l4 (binary/c u4?)]
+   [float-be (binary/c (or/c #f single-flonum?))]
+   [float-le (binary/c (or/c #f single-flonum?))]
+   [double-be (binary/c (or/c #f double-flonum?))]
+   [double-le (binary/c (or/c #f double-flonum?))]
+   [current-position (binary/c (or/c #f exact-nonnegative-integer?))]
+   [ref (-> binary? exact-nonnegative-integer? binary?)]
+   [move-position (-> exact-nonnegative-integer? (binary/c #f))]
    [discard (-> exact-positive-integer? (binary/c #f))]
    [bytestring (-> exact-positive-integer? (binary/c (or/c #f bytes?)))]))
 
@@ -153,4 +213,7 @@
                           (open-input-bytes 
                            (let ([res (open-output-bytes)])
                              (write-value l4 res 12334435)
-                             (get-output-bytes res)))) 12334435))
+                             (get-output-bytes res)))) 12334435)
+  (check-eqv? (round (* 1e3 (read-value float-be 
+                                        (open-input-bytes (bytes #x41 #x89 #x33 #x33)))))
+              17150.0))
