@@ -1,7 +1,8 @@
 #lang racket/base
 (require racket/class racket/contract (submod "base.rkt" unsafe))
 (provide binary-class/c 
-         (contract-out [binary-integer/c (->* (exact-integer?) (exact-integer?) flat-contract?)]
+         (contract-out [unsigned-integer/c (->* (exact-integer?) (exact-integer?) flat-contract?)]
+                       [signed-integer/c (->* (exact-integer?) (exact-integer?) flat-contract?)]
                        [u1? flat-contract?]
                        [u2? flat-contract?]
                        [u3? flat-contract?]
@@ -30,13 +31,17 @@
             (-> input-port? value-contract)
             (-> output-port? value-contract void?)))
 
-(define (binary-integer/c bytes [bits-per-byte 8])
+(define (unsigned-integer/c bytes [bits-per-byte 8])
   (or/c #f (integer-in 0 (sub1 (expt 2 (* bytes bits-per-byte))))))
 
-(define u1? (binary-integer/c 1))
-(define u2? (binary-integer/c 2))
-(define u3? (binary-integer/c 3))
-(define u4? (binary-integer/c 4))
+(define (signed-integer/c bytes [bits-per-byte 8])
+  (define max (sub1 (expt 2 (sub1 (* bytes bits-per-byte)))))
+  (or/c #f (integer-in (- (add1 max)) max)))
+
+(define u1? (unsigned-integer/c 1))
+(define u2? (unsigned-integer/c 2))
+(define u3? (unsigned-integer/c 3))
+(define u4? (unsigned-integer/c 4))
 
 (define (stringof/c char-contract)
  (flat-named-contract

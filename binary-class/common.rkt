@@ -87,8 +87,10 @@
 (require 'unsafe)
 
 (provide/contract
- [unsigned-integer (->* (exact-positive-integer?) (exact-positive-integer?) binary?)]
- [unsigned-integer-le (->* (exact-positive-integer?) (exact-positive-integer?) binary?)]
+ [integer-be (->* (exact-positive-integer?) (exact-positive-integer?) binary?)]
+ [integer-le (->* (exact-positive-integer?) (exact-positive-integer?) binary?)]
+ [signed (->* ((-> exact-positive-integer? exact-positive-integer? binary?) exact-positive-integer?)
+              (exact-positive-integer?) binary?)]
  [u1 binary?]
  [u2 binary?]
  [u3 binary?]
@@ -98,17 +100,27 @@
  [l3 binary?]
  [l4 binary?]
  [discard (-> exact-positive-integer? binary?)]
- [bytestring (-> exact-positive-integer? binary?)])
+ [bytestring (-> exact-positive-integer? binary?)]
+ ;; deprecated
+ [unsigned-integer (->* (exact-positive-integer?) (exact-positive-integer?) binary?)]
+ [unsigned-integer-le (->* (exact-positive-integer?) (exact-positive-integer?) binary?)])
+
 
 (module* safe #f
   (require "contract.rkt")
-  (define binary-integer/c
+  (define binary-unsigned-integer/c
     (->i ([bytes exact-positive-integer?])
          ([bits-per-byte exact-positive-integer?])
-         [result (bytes bits-per-byte) (binary/c (binary-integer/c bytes bits-per-byte))]))
+         [result (bytes bits-per-byte) (binary/c (unsigned-integer/c bytes bits-per-byte))]))
+  (define binary-signed-integer/c
+    (->i ([base-type binary-unsigned-integer/c]
+          [bytes exact-positive-integer?])
+         ([bits-per-byte exact-positive-integer?])
+         [result (bytes bits-per-byte) (binary/c (signed-integer/c bytes bits-per-byte))]))
   (provide/contract
-   [unsigned-integer binary-integer/c]
-   [unsigned-integer-le binary-integer/c]
+   [integer-be binary-unsigned-integer/c]
+   [integer-le binary-unsigned-integer/c]
+   [signed binary-signed-integer/c]
    [u1 (binary/c u1?)]
    [l1 (binary/c u1?)]
    [u2 (binary/c u2?)]

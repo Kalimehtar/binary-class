@@ -265,9 +265,14 @@ Returns contract for @racket[binary] with value contracted by @racket[_value-con
 Defines contract for binary class. @racket[_binary-class-id] should be an id of existing binary class.
 Rest arguments are the same as for @racket[class/c].}
 
-@defproc[(binary-integer/c [bytes exact-integer?] [bits-per-byte exact-integer? 8]) flat-contract?]{
-Defines contract for @racket[unsigned-integer] with given @racket[_bytes] 
+@defproc[(unsigned-integer/c [bytes exact-integer?] [bits-per-byte exact-integer? 8]) flat-contract?]{
+Defines contract for @racket[integer-be] and @racket[integer-le] with given @racket[_bytes] 
 and @racket[_bits-per-byte]. Checks that value is exact integer and in avalable range.}
+
+@defproc[(signed-integer/c [bytes exact-integer?] [bits-per-byte exact-integer? 8]) flat-contract?]{
+Defines contract for @racket[signed] with given @racket[_bytes] 
+and @racket[_bits-per-byte]. Checks that value is exact integer and in avalable range.}
+
 
 @deftogether[(@defthing[u1? flat-contract?]
               @defthing[u2? flat-contract?]
