@@ -184,6 +184,10 @@ Reads and writes bytes to @racket[bytes?] from binary port and vice versa}.
 Reads given number of bytes and return @racket[#f]. Writes given number of null bytes.
 Recommended for use with field id @racket[_] when you see "Reserved" in the specification.}
 
+@defproc[(constant [bytes bytes?]) binary?]{
+When reading, checks that @racket[_bytes] is read, returns @racket[#f]. When writing, writes @racket[_bytes].
+Recommended for use with field id @racket[_] when you see "Signature" in the specification.}
+
 @defthing[current-position binary?]{Return current position in file. Writes nothing.}
 
 @defproc[(move-position [position exact-nonnegative-integer?]) binary?]{

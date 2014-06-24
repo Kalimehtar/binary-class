@@ -5,7 +5,7 @@
   (require (submod "base.rkt" unsafe))
   (provide unsigned-integer unsigned-integer-le u1 u2 u3 u4 l1 l2 l3 l4 discard bytestring
            signed integer-be integer-le
-           float-be float-le double-be double-le current-position ref move-position)
+           float-be float-le double-be double-le current-position ref move-position constant)
   
   (define (integer-be bytes [bits-per-byte 8])
     (define max-shift (* (sub1 bytes) bits-per-byte))
@@ -74,7 +74,8 @@
      (λ (in) 
        (floating-point-bytes->real (read-bytes size in) be?))
      (λ (out value) 
-       (write-bytes (real->floating-point-bytes	value size be?) out))))
+       (write-bytes (real->floating-point-bytes	value size be?) out)
+       (void))))
   
   (define float-be (real 4 #t))
   (define float-le (real 4 #f))
@@ -129,7 +130,19 @@
        (read-bytes length in))
      (λ (out value)
        (define value* (or value #""))
-       (write-bytes value* out 0 length)))))
+       (write-bytes value* out 0 length)
+       (void))))
+  
+  (define (constant bytes)
+    (binary
+     (λ (in)
+       (define tmp (read-bytes (bytes-length bytes) in))
+       (unless (equal? bytes tmp)
+         (raise-arguments-error 'constant "invalid signature" "should be" bytes "got" bytes tmp))
+       #f)
+     (λ (out value)
+       (write-bytes bytes out)
+       (void)))))
 (require 'unsafe)
 
 (provide/contract
@@ -154,6 +167,7 @@
  [current-position binary?] 
  [ref (-> binary? exact-nonnegative-integer? binary?)]
  [move-position (-> exact-nonnegative-integer? binary?)]
+ [constant (-> bytes? binary?)]
  ;; deprecated
  [unsigned-integer (->* (exact-positive-integer?) (exact-positive-integer?) binary?)]
  [unsigned-integer-le (->* (exact-positive-integer?) (exact-positive-integer?) binary?)])
@@ -190,7 +204,8 @@
    [ref (-> binary? exact-nonnegative-integer? binary?)]
    [move-position (-> exact-nonnegative-integer? (binary/c #f))]
    [discard (-> exact-positive-integer? (binary/c #f))]
-   [bytestring (-> exact-positive-integer? (binary/c (or/c #f bytes?)))]))
+   [bytestring (-> exact-positive-integer? (binary/c (or/c #f bytes?)))]
+   [constant (-> bytes? (binary/c #f))]))
 
 (module+ test
   (require rackunit)
