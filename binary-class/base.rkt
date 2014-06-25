@@ -6,7 +6,6 @@
            binary?
            read-value
            write-value
-           #;read-object
            binary<%>
            define-binary-class)
   
@@ -16,15 +15,18 @@
   (struct binary (read write))
   
   (define (read-value type in . args)
-    (if (binary? type)
-        ((binary-read type) in)
-        (send (apply make-object type args) read in args)))
-      
-  (define (write-value type out value)
-    (if (binary? type)
-        ((binary-write type) out value)
-        (send value write out)))
-    
+    (cond 
+      [(binary? type) ((binary-read type) in)]
+      [(implementation? type binary<%>) (send (apply make-object type args) read in args)]
+      [else type]))
+
+  (define (write-value type out value . rest-values)
+    (cond 
+      [(binary? type) (apply (binary-write type) out value rest-values)]
+      [(implementation? type binary<%>) 
+       (send value write out)
+       (for ([v (rest-values)]) (send value write out))]))
+
   (define (copy-object old new)
     (for ([f (field-names old)])
       (dynamic-set-field! f new (dynamic-get-field f old))))
@@ -44,18 +46,20 @@
       (not (free-identifier=? x #'_)))
     (define (make-reader id+val)
       (with-syntax ([(FNAME FTYPE ARG ...) id+val])
-        (if (not-null? #'FNAME)
-            #'(set! FNAME (read-value FTYPE in ARG ...))
-            #'(read-value FTYPE in ARG ...))))
+        (syntax-case #'FNAME ()
+          [(FNAMES ...)          #'(set!-values FNAME (read-value FTYPE in ARG ...))]
+          [x (not-null? #'FNAME) #'(set! FNAME (read-value FTYPE in ARG ...))]
+          [_                     #'(read-value FTYPE in ARG ...)])))
     (define (make-writer id+val)
       (with-syntax ([(FNAME FTYPE ARG ...) id+val])
-        (if (not-null? #'FNAME)
-            #'(write-value FTYPE out FNAME)
-            #'(write-value FTYPE out #f))))
+        (syntax-case #'FNAME ()
+          [(FNAMES ...)          #`(write-value FTYPE out FNAMES ...)]
+          [x (not-null? #'FNAME) #'(write-value FTYPE out FNAME)]
+          [_                     #'(write-value FTYPE out #f)])))
     (syntax-parse stx
                   [(_ NAME ((FNAME FTYPE ARG ...) ...) BODY ...)
                    #'(define-binary-class NAME object% ((FNAME FTYPE ARG ...) ...) BODY ...)]
-                  [(_ NAME:id SUPER:expr ((FNAME:id FTYPE:expr ARG ...) ...)
+                  [(_ NAME:id SUPER:expr ((FNAME FTYPE ARG ...) ...)
                       (~optional (~seq #:dispatch DISPATCH:expr))
                       BODY ...)
                    (with-syntax* ([(SUPER-FIELD ...) (datum->syntax stx (get-fields #'SUPER))]
@@ -118,13 +122,11 @@
 
 (provide/contract
  [binary (-> (-> input-port? any)
-             (-> output-port? any/c any)
+             (->* (output-port? any/c) #:rest list? void?)
              binary?)]
  [binary? (-> any/c boolean?)]
- [write-value (-> (or/c binary? (implementation?/c binary<%>)) output-port? any/c any)]
- [read-value (->* ((or/c binary? (implementation?/c binary<%>)) input-port?)
-                   #:rest list?
-                   any)]
+ [write-value (->* (any/c output-port? any/c) #:rest list? void?)]
+ [read-value (->* (any/c input-port?) #:rest list? any)]
  [binary<%> interface?])
 (provide define-binary-class)
 
@@ -138,7 +140,7 @@
    (define-binary-class test2 test ((b u2)))
    (define tmp (read-value test2 1))
    (check-eq? (get-field a tmp) 'ok)
-   (check-eq? (get-field b tmp) 'ok2))  
+   (check-eq? (get-field b tmp) 'ok2))
   (test-begin
    (define-binary-class disp ((a read-val)) #:dispatch (if (= a 1) disp2 disp3))
    (define read-val (binary (λ (in) in) (λ (value out) (void))))
@@ -153,14 +155,12 @@
 
 (module* safe #f
   (provide/contract
-   [binary (-> (-> input-port? any/c)
-               (-> output-port? any/c void?)
+   ;; TODO: check that read returns the same number of values as write takes
+   [binary (-> (-> input-port? any)
+               (->* (output-port? any/c) #:rest list? void?)
                binary?)]
    [binary? (-> any/c boolean?)]
-   [write-value (-> (or/c binary? (implementation?/c binary<%>)) output-port? any/c void?)]
-   [read-value (->i ([binary-class (or/c binary? (implementation?/c binary<%>))]
-                      [port input-port?])
-                     #:rest [args list?]
-                     [result (binary-class) (is-a?/c binary-class)])]
+   [write-value (->* (any/c output-port? any/c) #:rest list? void?)]
+   [read-value (->* (any/c input-port?) #:rest list? any)]
    [binary<%> interface?])
   (provide define-binary-class))

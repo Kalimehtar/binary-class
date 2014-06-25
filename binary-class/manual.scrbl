@@ -41,11 +41,11 @@ It may be represented as
 Here @racket[iso-8859-1-bytes] should be a function of one argument, that returns structure 
 @racket[binary]. @racket[u1], @racket[id3-tag-size] are simply such structures.
 
-@defstruct[binary ([read (input-port? . -> . any)] 
-                   [write (output-port? any/c . -> . void?)])]{
+@defstruct[binary ([read (-> input-port? any)] 
+                   [write (->* (output-port? any/c) #:rest list? void?)])]{
   A structure type for binary values. @racket[_read] is a function, that reads from input port and
-returns the data. @racket[_write] -- takes output-port and data to write the data in port.
-}
+returns the data (maybe several values). @racket[_write] -- takes output-port and data to write 
+the data in port.}
 
 Note, that you may use values of previous fields to calculate the type of the next. 
 In the example the value of field @racket[size] is used to set the type of field @racket[frames].
@@ -90,26 +90,32 @@ be also not binary class, but then it should have no methods @racket[_read] and 
 
 @defform/subs[
 (define-binary-class id [superclass-expr]
-  ((field-id field-expr arg ...) ...) 
+  ((field field-expr arg ...) ...) 
   [#:dispatch dispatch-expr]
   class-body ...)
-([field-id _ id])
+([field _ id (id ...)])
 #:contracts ([superclass-expr class?] 
              [field-expr (or/c binary? (implementation?/c binary<%>))]
              [dispatch-expr (is-a?/c binary<%>)])]{
-Defines new binary class and binds it to @racket[_id]. @racket[class-body] --- any definitions, 
+Defines new binary class and binds it to @racket[_id]. @racket[_class-body] --- any definitions, 
 allowed inside @racket[class].
                                          
-@racket[field-id] may be @racket[__]. This means, that the field is omitted. 
+@racket[_field] may be @racket[__]. This means, that the field is omitted. 
 In this case no field is created in class, but the data is read and is written 
 from/to the binary port. Value for writing is @racket[#f].
+
+@racket[_field] may be list of @racket[_id]'s. In this case binary, returned from 
+@racket[_field-expr] should return the same number of values.
 
 @racket[_superclass-expr] may be either id of a binary class, or any expression, 
 returning non-binary class. If you return binary class from expression, then it is not error,
 but fields of given class will not be visible inside the current class @racket[field-expr]s.
 
 If @racket[_field-expr] returns class, implementing @racket[binary<%>], then provided 
-@racket[_arg]'s will be used as init arguments to @racket[make-object], otherwise they ignored.}
+@racket[_arg]'s will be used as init arguments to @racket[make-object], otherwise they ignored.
+
+If @racket[_field-expr] returns not @racket[binary<%>] neither @racket[binary], then the returned
+value assigned to @racket[_field] as is.}
 
 Binary class implements interface @racket[binary<%>]:
 
@@ -124,17 +130,27 @@ Binary class implements interface @racket[binary<%>]:
 To make the usage of the module easier there are some shortcuts 
 for reading and writing binary values.
 
-@defproc[(read-value [type (or/c binary? (implementation?/c binary<%>))] 
+@defproc[(read-value [type any/c] 
                      [in input-port?]
                      [init-v any/c] ...) 
          any]{
-Reads binary value from input port and returns it.}
+Reads binary value from input port and returns it.
+When @racket[_type] is @racket[binary], @racket[read-value] returns value read from @racket[_in] 
+with @racket[_read] field of @racket[_type].
+When @racket[_type] is @racket[binary<%>], @racket[read-value] makes object with given @racket[_init-v]'s,
+then fills it from @racket[_in] and returns it.
+When @racket[_type] is any other value, @racket[read-value] returns @racket[_type].}
 
-@defproc[(write-value [type (or/c binary? (implementation?/c binary<%>))] 
+@defproc[(write-value [type any/c] 
                       [out output-port?] 
-                      [value any/c]) 
+                      [value any/c])
          void?]{
-Writes binary value to output port.}
+Writes binary value to output port.
+When @racket[_type] is @racket[binary], @racket[write-value] writes @racket[_value] to @racket[_out] 
+with @racket[_write] field of @racket[_type].
+When @racket[_type] is @racket[binary<%>], @racket[write-value] assumes, that @racket[_value] is a
+binary object and writes it to @racket[_out].
+When @racket[_type] is any other value, @racket[write-value] do nothing.}
 
 @section{Common datatypes}
 
