@@ -209,8 +209,10 @@ Recommended for use with field id @racket[_] when you see "Signature" in the spe
 @defproc[(move-position [position exact-nonnegative-integer?]) binary?]{
 Sets position in input port when reading and in output port when writing.}
 
-@defproc[(ref [type binary?] [position exact-nonnegative-integer?]) binary?]{
-Sets given @racket[_position], process @racket[_type], then returns to original position}
+@defproc[(ref [position exact-nonnegative-integer?] [type binary?] [init-v any/c] ...) binary?]{
+Sets given @racket[_position], process @racket[_type], then returns to original position.
+If given @racket[_init-v]'s and @racket[_type] is a @racket[binary<%>], then @racket[_init-v]'s will
+be passed to @racket[read-object], when reading @racket[_type].}
 
 @section{Strings}
 

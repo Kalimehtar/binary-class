@@ -96,7 +96,7 @@
        (λ () BODY ...)
        (λ () (file-position stream save)))))
   
-  (define (ref type position . rest)
+  (define (ref position type . rest)
     (binary
      (λ (in)
        (with-current-position in
@@ -165,7 +165,7 @@
  [discard (-> exact-positive-integer? binary?)]
  [bytestring (-> exact-positive-integer? binary?)]
  [current-position binary?] 
- [ref (->* (binary? exact-nonnegative-integer?) #:rest list? binary?)]
+ [ref (->* (exact-nonnegative-integer? binary?) #:rest list? binary?)]
  [move-position (-> exact-nonnegative-integer? binary?)]
  [constant (-> bytes? binary?)]
  ;; deprecated
@@ -201,7 +201,7 @@
    [double-be (binary/c (or/c #f double-flonum?))]
    [double-le (binary/c (or/c #f double-flonum?))]
    [current-position (binary/c (or/c #f exact-nonnegative-integer?))]
-   [ref (-> binary? exact-nonnegative-integer? binary?)]
+   [ref (->* (exact-nonnegative-integer? binary?) #:rest list? binary?)]
    [move-position (-> exact-nonnegative-integer? (binary/c #f))]
    [discard (-> exact-positive-integer? (binary/c #f))]
    [bytestring (-> exact-positive-integer? (binary/c (or/c #f bytes?)))]
