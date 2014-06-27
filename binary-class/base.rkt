@@ -43,7 +43,7 @@
   
   (define-syntax (define-binary-class stx)
     (define (not-null? x)
-      (not (free-identifier=? x #'_)))
+      (and (not (list? x)) (not (free-identifier=? x #'_))))
     (define (make-reader id+val)
       (with-syntax ([(FNAME FTYPE ARG ...) id+val])
         (syntax-case #'FNAME ()
