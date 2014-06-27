@@ -122,7 +122,8 @@
 
 (provide/contract
  [binary (-> (-> input-port? any)
-             (->* (output-port? any/c) #:rest list? void?)
+             (or/c (->* (output-port? any/c) #:rest list? any)
+                   (-> output-port? any/c any))
              binary?)]
  [binary? (-> any/c boolean?)]
  [write-value (->* (any/c output-port? any/c) #:rest list? void?)]
@@ -157,7 +158,8 @@
   (provide/contract
    ;; TODO: check that read returns the same number of values as write takes
    [binary (-> (-> input-port? any)
-               (->* (output-port? any/c) #:rest list? void?)
+               (or/c (->* (output-port? any/c) #:rest list? void?)
+                     (-> output-port? any/c void?))
                binary?)]
    [binary? (-> any/c boolean?)]
    [write-value (->* (any/c output-port? any/c) #:rest list? void?)]

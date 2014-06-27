@@ -42,7 +42,9 @@ Here @racket[iso-8859-1-bytes] should be a function of one argument, that return
 @racket[binary]. @racket[u1], @racket[id3-tag-size] are simply such structures.
 
 @defstruct[binary ([read (-> input-port? any)] 
-                   [write (->* (output-port? any/c) #:rest list? void?)])]{
+                   [write (or/c 
+                           (->* (output-port? any/c) #:rest list? void?)
+                           (-> output-port? any/c void?))])]{
   A structure type for binary values. @racket[_read] is a function, that reads from input port and
 returns the data (maybe several values). @racket[_write] -- takes output-port and data to write 
 the data in port.}
