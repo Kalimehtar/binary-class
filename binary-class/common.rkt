@@ -96,16 +96,16 @@
        (λ () BODY ...)
        (λ () (file-position stream save)))))
   
-  (define (ref type position)
+  (define (ref type position . rest)
     (binary
      (λ (in)
        (with-current-position in
           (file-position in position)
-          (read-value type in)))
-     (λ (out value)
+          (apply read-value type in rest)))
+     (λ (out value . rest-values)
        (with-current-position out
          (file-position out position)
-         (write-value type out value)))))
+         (apply write-value type out value rest-values)))))
   
   (define (move-position position)
     (binary
@@ -165,7 +165,7 @@
  [discard (-> exact-positive-integer? binary?)]
  [bytestring (-> exact-positive-integer? binary?)]
  [current-position binary?] 
- [ref (-> binary? exact-nonnegative-integer? binary?)]
+ [ref (->* (binary? exact-nonnegative-integer?) #:rest list? binary?)]
  [move-position (-> exact-nonnegative-integer? binary?)]
  [constant (-> bytes? binary?)]
  ;; deprecated
