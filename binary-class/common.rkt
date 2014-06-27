@@ -138,7 +138,7 @@
      (λ (in)
        (define tmp (read-bytes (bytes-length bytes) in))
        (unless (equal? bytes tmp)
-         (raise-arguments-error 'constant "invalid signature" "should be" bytes "got" bytes tmp))
+         (raise-arguments-error 'constant "invalid signature" "should be" bytes "got" tmp))
        #f)
      (λ (out value)
        (write-bytes bytes out)
