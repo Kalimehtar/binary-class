@@ -1,6 +1,14 @@
 #lang racket/base
 (require racket/contract/base racket/class "syntax.rkt" "private/base.rkt")
 
+(module+ unsafe
+  (provide binary
+           binary?
+           read-value
+           write-value
+           binary<%>
+           define-binary-class))
+
 (provide/contract
  [binary (-> (-> input-port? any)
              (or/c (->* (output-port? any/c) #:rest list? any)
