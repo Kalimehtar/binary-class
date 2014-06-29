@@ -64,12 +64,16 @@
                          (begin0 (values) 
                                  (save-fields! #'NAME (list 'ALL-FIELD ...))))))]))
 
+(define-syntax-rule (values->maybe-list FTYPE)
+  (let ([l (call-with-values (λ () FTYPE) list)])
+    (if (null? (cdr l)) (car l) (values-box l))))
+
 (define-for-syntax (make-reader id+val)
   (with-syntax ([(FNAME FTYPE ARG ...) id+val])
     (syntax-case #'FNAME ()
       [(NAME ...)
        (with-syntax ([(LOCAL ...) (generate-temporaries #'(NAME ...))])
-         #'(let-values ([(LOCAL ...) (read-value FTYPE in ARG ...)])
+         #'(let-values ([(LOCAL ...) (read-value (values->maybe-list FTYPE) in ARG ...)])
              (set* NAME LOCAL) ...))]
       [NAME #'(set* FNAME (read-value FTYPE in ARG ...))])))
 

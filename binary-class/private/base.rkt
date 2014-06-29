@@ -4,14 +4,18 @@
          binary?
          read-value
          write-value
-         binary<%>)
+         binary<%>
+         values-box)
 
 (struct binary (read write))
-  
+
+(struct values-box (value))
+
 (define (read-value type in . args)
-  (cond 
+  (cond    
     [(binary? type) ((binary-read type) in)]
     [(implementation? type binary<%>) (send (apply make-object type args) read in args)]
+    [(values-box? type) (apply values (values-box-value type))]
     [else type]))
 
 (define (write-value type out value . rest-values)
