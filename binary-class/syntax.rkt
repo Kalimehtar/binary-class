@@ -76,7 +76,7 @@
 (define-syntax (set* stx)
   (syntax-case stx ()
     [(_ VAR VALUE) (not-null? #'VAR) #'(set! VAR VALUE)]
-    [(_ VAR VALUE)                   #'(void)]))
+    [(_ VAR VALUE)                   #'(begin VALUE (void))]))
 
 (define-for-syntax (make-writer id+val)
   (with-syntax ([(FNAME FTYPE ARG ...) id+val])

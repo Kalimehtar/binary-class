@@ -11,8 +11,7 @@
 
 (provide/contract
  [binary (-> (-> input-port? any)
-             (or/c (->* (output-port? any/c) #:rest list? any)
-                   (-> output-port? any/c any))
+             procedure?
              binary?)]
  [binary? (-> any/c boolean?)]
  [write-value (->* (any/c output-port? any/c) #:rest list? void?)]
