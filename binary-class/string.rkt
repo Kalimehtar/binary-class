@@ -6,7 +6,10 @@
            iso-8859-1-string
            iso-8859-1-terminated-string
            ucs-2-string
-           ucs-2-terminated-string)
+           ucs-2-terminated-string
+           iso-8859-1-char
+           ucs-2-char
+           ucs-2-char-type)
   
   (define (generic-string length character-type)
     (binary
@@ -76,7 +79,7 @@
     (binary 
      (λ (in)
        (define byte-order-mark (read-value u2 in))
-       (read-value (generic-string characters (ucs-2-char (ucs-2-char-type byte-order-mark))) in))
+       (read-value (generic-string characters (ucs-2-char-type byte-order-mark)) in))
      (λ (out value)
        (write-value u2 out #xfeff)
        (write-value (generic-string characters (ucs-2-char #f)) out (or value "")))))
@@ -99,7 +102,10 @@
  [iso-8859-1-string (-> exact-positive-integer? any)]
  [iso-8859-1-terminated-string (->* () (char?) any)]
  [ucs-2-string (-> exact-positive-integer? any)]
- [ucs-2-terminated-string (->* () (char?) any)])
+ [ucs-2-terminated-string (->* () (char?) any)]
+ [iso-8859-1-char binary?]
+ [ucs-2-char (-> boolean? any)]
+ [ucs-2-char-type (-> (or/c #xfeff #xfffe) any)])
 
 (module* safe #f
   (require "contract.rkt")
@@ -122,4 +128,7 @@
                                  ([terminator char?]) 
                                  [result (terminator) 
                                          (binary/c (string-terminated/c terminator 
-                                                                        ucs-2-char?))])]))
+                                                                        ucs-2-char?))])]
+   [iso-8859-1-char binary?]
+   [ucs-2-char (-> boolean? binary?)]
+   [ucs-2-char-type (-> (or/c #xfeff #xfffe) binary?)]))
