@@ -139,8 +139,8 @@ for reading and writing binary values.
 Reads binary value from input port and returns it.
 When @racket[_type] is @racket[binary], @racket[read-value] returns value read from @racket[_in] 
 with @racket[_read] field of @racket[_type].
-When @racket[_type] is @racket[binary<%>], @racket[read-value] makes object with given @racket[_init-v]'s,
-then fills it from @racket[_in] and returns it.
+When @racket[_type] is @racket[binary<%>], @racket[read-value] makes object with 
+given @racket[_init-v]'s, then fills it from @racket[_in] and returns it.
 When @racket[_type] is any other value, @racket[read-value] returns @racket[_type].}
 
 @defproc[(write-value [type any/c] 
@@ -184,7 +184,8 @@ to be @racket[integer-be] or @racket[integer-le] or any other binary type with s
               @defthing[l3 binary?]
               @defthing[l4 binary?])]{
 Binary types for big-endian integers @racket[u1] -- @racket[u4] 
-and little-edian ones @racket[l1] -- @racket[l4]. Number 1--4 displays the length of the integer in bytes}
+and little-edian ones @racket[l1] -- @racket[l4]. Number 1--4 displays the length 
+of the integer in bytes}
 
 @deftogether[(@defthing[float-be binary?]
               @defthing[float-le binary?]
@@ -203,8 +204,9 @@ Reads given number of bytes and return @racket[#f]. Writes given number of null 
 Recommended for use with field id @racket[_] when you see "Reserved" in the specification.}
 
 @defproc[(constant [bytes bytes?]) binary?]{
-When reading, checks that @racket[_bytes] is read, returns @racket[#f]. When writing, writes @racket[_bytes].
-Recommended for use with field id @racket[_] when you see "Signature" in the specification.}
+When reading, checks that @racket[_bytes] is read, returns @racket[#f]. When writing, 
+writes @racket[_bytes]. Recommended for use with field id @racket[_] when you see 
+"Signature" in the specification.}
 
 @defthing[current-position binary?]{Return current position in file. Writes nothing.}
 
@@ -245,6 +247,15 @@ Only @racket[char?]'s with codes up to 65535 allowed}
 @defproc[(ucs-2-terminated-string [terminator char? #\nul]) binary?]{
 String, represented in file as a UCS-2 string with @racket[terminator].
 Only @racket[char?]'s with codes up to 65535 allowed}
+
+@defthing[iso-8859-1-char binary?]{ISO 8859-1 character}
+
+@defproc[(ucs-2-char [swap? boolean?]) binary?]{UCS-2 char. @racket[_swap] is #t, when byte order 
+in file and operating system is different.}
+
+@defproc[(ucs-2-char-type [byte-order-marker (or/c #xfeff #xfffe)]) binary?]{UCS-2 char from given 
+byte order marker. BOM should be #xFEFF, so if it is #xFFFE, then @racket[ucs-2-char] 
+should be swapped.}
 
 @section{Performance and safety}
 
