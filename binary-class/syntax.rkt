@@ -86,7 +86,7 @@
   (with-syntax ([(FNAME FTYPE ARG ...) id+val])
     (syntax-case #'FNAME ()
       [(NAME ...)
-       (with-syntax ([(NAME* ...) (map (λ (x) (if (not-null? x) x #f)) (syntax->list #'(NAME ...)))])
+       (with-syntax ([(NAME* ...) (map not-null? (syntax->list #'(NAME ...)))])
          #`(write-value FTYPE out NAME* ...))]
       [NAME (not-null? #'NAME) #'(write-value FTYPE out NAME)]
       [NAME                    #'(write-value FTYPE out #f)])))
@@ -105,7 +105,7 @@
                 (if skip-dispatch? this RETURN)))))
 
 (define-for-syntax (not-null? x)
-  (not (free-identifier=? x #'_)))
+  (if (free-identifier=? x #'_) #f x))
 
 (define (copy-object old new)
   (for ([f (field-names old)])
