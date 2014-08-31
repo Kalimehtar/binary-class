@@ -36,13 +36,14 @@
   
   (define (signed base bytes [bits-per-byte 8])
     (define max (expt 2 (sub1 (* bytes bits-per-byte))))
+    (define 2max (+ max max))
     (define base-type (base bytes bits-per-byte))
     (binary
      (λ (in)
        (define value (read-value base-type in))
-       (if (>= value max) (- value max max) value))
+       (if (>= value max) (- value 2max) value))
      (λ (out value)
-       (define value* (if (negative? value) (+ max max value) value))
+       (define value* (if (negative? value) (+ value 2max) value))
        (write-value base-type out value*))))
   
   (define unsigned-integer integer-be)
