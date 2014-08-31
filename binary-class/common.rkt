@@ -10,21 +10,29 @@
   (define (integer-be bytes [bits-per-byte 8])
     (define max-shift (* (sub1 bytes) bits-per-byte))
     (binary
-     (λ (in)
-       (let loop ([value 0] [shift max-shift] [byte 0])
-         (if (= byte bytes) 
-             value
-             (loop (+ value (arithmetic-shift (read-byte in) shift))
-                   (- shift bits-per-byte)
-                   (add1 byte)))))
-     (λ (out value)
-       (define value* (or value 0))
-       (let loop ([shift (+ max-shift bits-per-byte)] [byte 1])
-         (define next-shift (- shift bits-per-byte))
-         (write-byte (bitwise-bit-field value* next-shift shift) out)
-         (if (= byte bytes)
-             (void)
-             (loop next-shift (add1 byte)))))))
+     (cond
+       [(= bits-per-byte 8)
+        (λ (in) (integer-bytes->integer (read-bytes bytes in) #f #t))]
+       [else 
+        (λ (in)
+          (let loop ([value 0] [shift max-shift] [byte 0])
+            (if (= byte bytes) 
+                value
+                (loop (+ value (arithmetic-shift (read-byte in) shift))
+                      (- shift bits-per-byte)
+                      (add1 byte)))))])
+     (cond
+       [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
+        (λ (out value) (write-bytes (integer->integer-bytes value bytes #f #t) out))]
+       [else
+        (λ (out value)
+          (define value* (or value 0))
+          (let loop ([shift (+ max-shift bits-per-byte)] [byte 1])
+            (define next-shift (- shift bits-per-byte))
+            (write-byte (bitwise-bit-field value* next-shift shift) out)
+            (if (= byte bytes)
+                (void)
+                (loop next-shift (add1 byte)))))])))
   
   (define (signed base bytes [bits-per-byte 8])
     (define max (expt 2 (sub1 (* bytes bits-per-byte))))
@@ -34,8 +42,8 @@
        (define value (read-value base-type in))
        (if (>= value max) (- value max max) value))
      (λ (out value)
-       (define value* (if (negative? value) (+ max (- value)) value))
-       (write-value base-type out value))))
+       (define value* (if (negative? value) (+ max max value) value))
+       (write-value base-type out value*))))
   
   (define unsigned-integer integer-be)
   
@@ -46,21 +54,29 @@
   
   (define (integer-le bytes [bits-per-byte 8])
     (binary
-     (λ (in)
-       (let loop ([value 0] [shift 0] [byte 0])
-         (if (= byte bytes) 
-             value
-             (loop (+ value (arithmetic-shift (read-byte in) shift))
-                   (+ shift bits-per-byte)
-                   (add1 byte)))))
-     (λ (out value)
-       (define value* (or value 0))
-       (let loop ([shift 0] [byte 1])
-         (define next-shift (+ shift bits-per-byte))
-         (write-byte (bitwise-bit-field value shift next-shift) out)
-         (if (= byte bytes)
-             (void)
-             (loop next-shift (add1 byte)))))))
+     (cond
+       [(= bits-per-byte 8)
+        (λ (in) (integer-bytes->integer (read-bytes bytes in) #f #f))]
+       [else 
+        (λ (in)
+          (let loop ([value 0] [shift 0] [byte 0])
+            (if (= byte bytes) 
+                value
+                (loop (+ value (arithmetic-shift (read-byte in) shift))
+                      (+ shift bits-per-byte)
+                      (add1 byte)))))])
+     (cond
+       [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
+        (λ (out value) (write-bytes (integer->integer-bytes value bytes #f #f) out))]
+       [else
+        (λ (out value)
+          (define value* (or value 0))
+          (let loop ([shift 0] [byte 1])
+            (define next-shift (+ shift bits-per-byte))
+            (write-byte (bitwise-bit-field value shift next-shift) out)
+            (if (= byte bytes)
+                (void)
+                (loop next-shift (add1 byte)))))])))
   
   (define unsigned-integer-le integer-le)
   
