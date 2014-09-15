@@ -87,7 +87,7 @@
     (syntax-case #'FNAME ()
       [(NAME ...)
        (with-syntax ([(NAME* ...) (map not-null? (syntax->list #'(NAME ...)))])
-         #`(write-value FTYPE out NAME* ...))]
+         #`(write-value (values->maybe-list FTYPE) out NAME* ...))]
       [NAME (not-null? #'NAME) #'(write-value FTYPE out NAME)]
       [NAME                    #'(write-value FTYPE out #f)])))
 

@@ -23,6 +23,6 @@
     [(binary? type) (apply (binary-write type) out value rest-values)]
     [(implementation? type binary<%>) 
      (send value write out)
-     (for ([v (rest-values)]) (send value write out))]))
+     (for ([v (in-list rest-values)]) (send value write out))]))
 
 (define binary<%> (interface () read write))
