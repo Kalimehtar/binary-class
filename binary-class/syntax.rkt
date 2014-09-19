@@ -26,17 +26,18 @@
                     [(ALL-FIELD ...) (append (syntax->list #'(SUPER-FIELD ...))
                                              (syntax->list #'(NOT-NULL-FIELD ...)))]
                     [RETURN (if (attribute DISPATCH)
-                                #'(let ([obj (apply make-object DISPATCH args)])
-                                    (copy-object this obj)
-                                    (send obj read in args #f this%)
-                                    obj)
+                                (syntax/loc #'DISPATCH (let ([obj (apply make-object DISPATCH args)])
+                                                         (copy-object this obj)
+                                                         (send obj read in args #f this%)
+                                                         obj))
                                 #'this)]
                     [(BEGIN ...) 
                      #'((super-new)
                         (inherit-field SUPER-FIELD ...)
                         (field (NOT-NULL-FIELD #f) ...))]
-                    [READ/public (read-template #'define/public #'NAME #'RETURN #'(READER ...))]
-                    [READ/override (read-template #'define/override 
+                    [READ/public (read-template stx #'define/public #'NAME #'RETURN #'(READER ...))]
+                    [READ/override (read-template stx
+                                                  #'define/override 
                                                   #'NAME 
                                                   #'RETURN 
                                                   #'((super read in args #t skip-super-class) 
@@ -73,39 +74,41 @@
     (syntax-case #'FNAME ()
       [(NAME ...)
        (with-syntax ([(LOCAL ...) (generate-temporaries #'(NAME ...))])
-         #'(let-values ([(LOCAL ...) (read-value (values->maybe-list FTYPE) in ARG ...)])
-             (set* NAME LOCAL) ...))]
-      [NAME #'(set* FNAME (read-value FTYPE in ARG ...))])))
+         (syntax/loc #'(NAME ...) 
+           (let-values ([(LOCAL ...) (read-value (values->maybe-list FTYPE) in ARG ...)])
+             (set* NAME LOCAL) ...)))]
+      [NAME #`(set* FNAME #,(syntax/loc #'FTYPE (read-value FTYPE in ARG ...)))])))
 
 (define-syntax (set* stx)
   (syntax-case stx ()
-    [(_ VAR VALUE) (not-null? #'VAR) #'(set! VAR VALUE)]
-    [(_ VAR VALUE)                   #'(begin VALUE (void))]))
+    [(_ VAR VALUE) (not-null? #'VAR) (syntax/loc #'VALUE (set! VAR VALUE))]
+    [(_ VAR VALUE)                   (syntax/loc #'VALUE (begin VALUE (void)))]))
 
 (define-for-syntax (make-writer id+val)
   (with-syntax ([(FNAME FTYPE ARG ...) id+val])
     (syntax-case #'FNAME ()
       [(NAME ...)
-       (with-syntax ([(NAME* ...) (map not-null? (syntax->list #'(NAME ...)))])
+       (with-syntax ([(NAME* ...) (map (λ (x) (if (not-null? x) x #f)) (syntax->list #'(NAME ...)))])
          #`(write-value (values->maybe-list FTYPE) out NAME* ...))]
       [NAME (not-null? #'NAME) #'(write-value FTYPE out NAME)]
       [NAME                    #'(write-value FTYPE out #f)])))
 
-(define-for-syntax (read-template stx-DEFINE stx-NAME stx-RETURN stx-READER)
+(define-for-syntax (read-template stx stx-DEFINE stx-NAME stx-RETURN stx-READER)
   (with-syntax ([DEFINE stx-DEFINE]
                 [NAME stx-NAME]
                 [RETURN stx-RETURN]
                 [(READER ...) stx-READER])
-    #'(DEFINE (read in 
+    #`(DEFINE (read in 
                     [args null] 
                     [skip-dispatch? #f]
                     [skip-super-class #f])
-              (unless (eq? skip-super-class NAME) 
-                READER ...
-                (if skip-dispatch? this RETURN)))))
+              #,(syntax/loc stx
+                          (unless (eq? skip-super-class NAME) 
+                            READER ...
+                            (if skip-dispatch? this RETURN))))))
 
 (define-for-syntax (not-null? x)
-  (if (free-identifier=? x #'_) #f x))
+  (not (free-identifier=? x #'_)))
 
 (define (copy-object old new)
   (for ([f (field-names old)])
