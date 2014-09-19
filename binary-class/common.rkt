@@ -23,7 +23,7 @@
                       (add1 byte)))))])
      (cond
        [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
-        (λ (out value) (write-bytes (integer->integer-bytes value bytes #f #t) out))]
+        (λ (out value) (write-bytes (integer->integer-bytes (or value 0) bytes #f #t) out))]
        [else
         (λ (out value)
           (define value* (or value 0))
@@ -68,13 +68,13 @@
                       (add1 byte)))))])
      (cond
        [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
-        (λ (out value) (write-bytes (integer->integer-bytes value bytes #f #f) out))]
+        (λ (out value) (write-bytes (integer->integer-bytes (or value 0) bytes #f #f) out))]
        [else
         (λ (out value)
           (define value* (or value 0))
           (let loop ([shift 0] [byte 1])
             (define next-shift (+ shift bits-per-byte))
-            (write-byte (bitwise-bit-field value shift next-shift) out)
+            (write-byte (bitwise-bit-field value* shift next-shift) out)
             (if (= byte bytes)
                 (void)
                 (loop next-shift (add1 byte)))))])))
