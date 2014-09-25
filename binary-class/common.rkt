@@ -11,7 +11,7 @@
     (define max-shift (* (sub1 bytes) bits-per-byte))
     (binary
      (cond
-       [(= bits-per-byte 8)
+       [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
         (λ (in) (integer-bytes->integer (read-bytes bytes in) #f #t))]
        [else 
         (λ (in)
@@ -56,7 +56,7 @@
   (define (integer-le bytes [bits-per-byte 8])
     (binary
      (cond
-       [(= bits-per-byte 8)
+       [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
         (λ (in) (integer-bytes->integer (read-bytes bytes in) #f #f))]
        [else 
         (λ (in)
