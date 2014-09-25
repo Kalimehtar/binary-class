@@ -74,9 +74,13 @@
     (syntax-case #'FNAME ()
       [(NAME ...)
        (with-syntax ([(LOCAL ...) (generate-temporaries #'(NAME ...))])
-         (syntax/loc #'(NAME ...) 
-           (let-values ([(LOCAL ...) (read-value (values->maybe-list FTYPE) in ARG ...)])
-             (set* NAME LOCAL) ...)))]
+         #`(let-values ([(LOCAL ...) 
+                         #,(syntax/loc #'FTYPE 
+                             (call-with-values ;; add frame to prevent TCO
+                              (λ () (read-value 
+                                     (values->maybe-list FTYPE) in ARG ...))
+                              values))])
+             (set* NAME LOCAL) ...))]
       [NAME #`(set* FNAME #,(syntax/loc #'FTYPE (read-value FTYPE in ARG ...)))])))
 
 (define-syntax (set* stx)
@@ -89,9 +93,10 @@
     (syntax-case #'FNAME ()
       [(NAME ...)
        (with-syntax ([(NAME* ...) (map (λ (x) (if (not-null? x) x #f)) (syntax->list #'(NAME ...)))])
-         #`(write-value (values->maybe-list FTYPE) out NAME* ...))]
-      [NAME (not-null? #'NAME) #'(write-value FTYPE out NAME)]
-      [NAME                    #'(write-value FTYPE out #f)])))
+         (syntax/loc #'FTYPE 
+           (values (write-value (values->maybe-list FTYPE) out NAME* ...))))]
+      [NAME (not-null? #'NAME) (syntax/loc #'FTYPE (values (write-value FTYPE out NAME)))]
+      [NAME                    (syntax/loc #'FTYPE (values (write-value FTYPE out #f)))])))
 
 (define-for-syntax (read-template stx stx-DEFINE stx-NAME stx-RETURN stx-READER)
   (with-syntax ([DEFINE stx-DEFINE]
