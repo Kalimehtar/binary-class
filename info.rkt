@@ -2,3 +2,4 @@
 (define version "2.0")
 (define collection 'multi)
 (define deps '("base" "rackunit-lib" "scribble-lib"))
+(define build-deps '("racket-doc"))
