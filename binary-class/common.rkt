@@ -23,7 +23,9 @@
                       (add1 byte)))))])
      (cond
        [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
-        (λ (out value) (write-bytes (integer->integer-bytes (or value 0) bytes #f #t) out))]
+        (λ (out value)
+          (write-bytes (integer->integer-bytes (or value 0) bytes #f #t) out)
+          (void))]
        [else
         (λ (out value)
           (define value* (or value 0))
@@ -68,7 +70,9 @@
                       (add1 byte)))))])
      (cond
        [(and (= bits-per-byte 8) (member bytes '(2 4 8) =))
-        (λ (out value) (write-bytes (integer->integer-bytes (or value 0) bytes #f #f) out))]
+        (λ (out value)
+          (write-bytes (integer->integer-bytes (or value 0) bytes #f #f) out)
+          (void))]
        [else
         (λ (out value)
           (define value* (or value 0))
