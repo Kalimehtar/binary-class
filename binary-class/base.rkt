@@ -7,7 +7,8 @@
            read-value
            write-value
            binary<%>
-           define-binary-class))
+           define-binary-class
+           symbolic-binary))
 
 (provide/contract
  [binary (-> (-> input-port? any)
@@ -17,7 +18,7 @@
  [write-value (->* (any/c output-port? any/c) #:rest list? void?)]
  [read-value (->* (any/c input-port?) #:rest list? any)]
  [binary<%> interface?])
-(provide define-binary-class)
+(provide define-binary-class symbolic-binary)
 
 (module+ test
   (require rackunit)
@@ -53,4 +54,4 @@
    [write-value (->* (any/c output-port? any/c) #:rest list? void?)]
    [read-value (->* (any/c input-port?) #:rest list? any)]
    [binary<%> interface?])
-  (provide define-binary-class))
+  (provide define-binary-class symbolic-binary))

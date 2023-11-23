@@ -154,6 +154,21 @@ When @racket[_type] is @racket[binary<%>], @racket[write-value] assumes, that @r
 binary object and writes it to @racket[_out].
 When @racket[_type] is any other value, @racket[write-value] do nothing.}
 
+@defform[
+(symbolic-binary expr (symbol value) ...)]{
+   Evaluates @racket[expr], then return symbol, that corresponds @racket[value],
+  that is @racket[equal?] to the @racket[expr]'s result.
+
+@racket[(symbolic-binary (+ 2 3)
+    (big    5)
+    (little 4))] will return @racket['big].
+
+It is written by
+ @(hyperlink "https://racket.discourse.group/t/practical-common-lisp-in-racket/1890/5" 
+             "ceving").
+}
+
+
 @section{Common datatypes}
 
 @(defmodule binary-class/common)

@@ -5,7 +5,8 @@
          read-value
          write-value
          binary<%>
-         values-box)
+         values-box
+         symbolic-binary)
 
 (struct binary (read write))
 
@@ -26,3 +27,25 @@
      (for ([v (in-list rest-values)]) (send value write out))]))
 
 (define binary<%> (interface () read write))
+
+(define-syntax symbolic-binary
+  (syntax-rules ()
+    ((_ type (sym val) ...)
+     (let ((t type))
+       (binary
+        (lambda (in)
+          (let* ((value (read-value t in))
+                 (symbol (cond
+                           ((equal? value val) 'sym)
+                           ...
+                           (else (raise-argument-error
+                                  'symbolic-binary "invalid value" value)))))
+            symbol))
+        (lambda (out symbol)
+          (let ((value (cond
+                         ((eqv? symbol 'sym) val)
+                         ...
+                         (else (raise-argument-error
+                                'symbolic-binary "invalid symbol" symbol)))))
+            (write-value t value))))))))
+
